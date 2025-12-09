@@ -1,80 +1,68 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MySql.Data.MySqlClient;
 using System.Data;
-using MySql.Data.MySqlClient;
 
 namespace ZooApp
 {
-    public class DatabaseHelper
+    public class DB
     {
-        private string connectionString;
-        public DatabaseHelper()
-        {
-            // XAMPP Standard-Verbindung
-            connectionString = "server=localhost;port=3306;database=zoo_verwaltung;uid=root;pwd=;";
-        }
-        public MySqlConnection GetConnection()
-        {
-            return new MySqlConnection(connectionString);
-        }
-        // Methode zum Testen der Verbindung
-        public bool TestConnection()
+        private readonly string connStr =
+            "server=localhost;port=3306;database=zoo_verwaltung;uid=root;pwd=;";
+
+        // ----------------------------------------------------------
+        // Verbindung testen
+        // ----------------------------------------------------------
+        public bool Test()
         {
             try
             {
-                using (var connection = GetConnection())
+                using (var conn = new MySqlConnection(connStr))
                 {
-                    connection.Open();
+                    conn.Open();
                     return true;
                 }
             }
-            catch (Exception)
+            catch
             {
                 return false;
             }
-            
+        }
 
-        }
-        // Allgemeine Methode zum Ausführen von Non-Query-Befehlen
-        public int ExecuteNonQuery(string query, MySqlParameter[] parameters = null)
-        {
-            using (MySqlConnection conn = GetConnection())
-            {
-                conn.Open();
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                {
-                    if (parameters != null)
-                    {
-                        cmd.Parameters.AddRange(parameters);
-                    }
-                    return cmd.ExecuteNonQuery();
-                }
-            }
-        }
-        // Methode zum Abrufen von Daten
-        public DataTable GetData(string query, MySqlParameter[] parameters = null)
+        // ----------------------------------------------------------
+        // SELECT → DataTable
+        // ----------------------------------------------------------
+        public DataTable Get(string sql, params (string, object)[] parameters)
         {
             DataTable dt = new DataTable();
-            using (MySqlConnection conn = GetConnection())
-            {
-                conn.Open();
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                {
-                    if (parameters != null)
-                    {
-                        cmd.Parameters.AddRange(parameters);
-                    }
-                    using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
-                    {
-                        adapter.Fill(dt);
-                    }
-                }
-            }
-            return dt;
 
+            using (var conn = new MySqlConnection(connStr))
+            using (var cmd = new MySqlCommand(sql, conn))
+            {
+                foreach ((string name, object value) in parameters)
+                    cmd.Parameters.AddWithValue(name, value);
+
+                conn.Open();
+
+                using (var ad = new MySqlDataAdapter(cmd))
+                    ad.Fill(dt);
+            }
+
+            return dt;
+        }
+
+        // ----------------------------------------------------------
+        // INSERT / UPDATE / DELETE → Anzahl betroffene Zeilen
+        // ----------------------------------------------------------
+        public int Execute(string sql, params (string, object)[] parameters)
+        {
+            using (var conn = new MySqlConnection(connStr))
+            using (var cmd = new MySqlCommand(sql, conn))
+            {
+                foreach ((string name, object val) in parameters)
+                    cmd.Parameters.AddWithValue(name, val);
+
+                conn.Open();
+                return cmd.ExecuteNonQuery();
+            }
         }
     }
 }

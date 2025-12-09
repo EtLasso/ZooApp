@@ -564,7 +564,7 @@ namespace ZooApp
             cmbTierartTiere.Name = "cmbTierartTiere";
             cmbTierartTiere.Size = new Size(200, 25);
             cmbTierartTiere.TabIndex = 8;
-            cmbTierartTiere.SelectedIndexChanged += cmbTierartTiere_SelectedIndexChanged;
+            
             // 
             // dtpGeburtsdatum
             // 
@@ -590,7 +590,7 @@ namespace ZooApp
             txtTierName.Name = "txtTierName";
             txtTierName.Size = new Size(200, 25);
             txtTierName.TabIndex = 5;
-            txtTierName.TextChanged += txtTierName_TextChanged;
+            
             // 
             // lblGehegeTiere
             // 
@@ -695,7 +695,7 @@ namespace ZooApp
             panelHeader.Name = "panelHeader";
             panelHeader.Size = new Size(1200, 70);
             panelHeader.TabIndex = 2;
-            panelHeader.Paint += panelHeader_Paint;
+            
             // 
             // lblTitle
             // 
@@ -708,7 +708,7 @@ namespace ZooApp
             lblTitle.Size = new Size(314, 45);
             lblTitle.TabIndex = 0;
             lblTitle.Text = "🦁 Zoo Verwaltung";
-            lblTitle.Click += lblTitle_Click;
+            
             // 
             // Form1
             // 

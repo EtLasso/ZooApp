@@ -1,201 +1,191 @@
-# Zoo Verwaltungssoftware
+🐾 Zoo Verwaltungssoftware
 
-Eine vollständige Windows Forms Anwendung zur Verwaltung eines Zoos mit MySQL-Datenbankanbindung.
+Modernes CRUD-Verwaltungssystem für einen Zoo (C# WinForms + MySQL)
 
-## Funktionen
 
-Die Anwendung bietet vollständiges CRUD (Create, Read, Update, Delete) für:
-- **Kontinente**: Verwaltung der geografischen Kontinente
-- **Gehege**: Verwaltung der Gehege mit Zuordnung zu Kontinenten
-- **Tierarten**: Verwaltung verschiedener Tierarten
-- **Tiere**: Verwaltung einzelner Tiere mit Name, Gewicht, Geburtsdatum, Tierart und Gehege
-- **Übersicht**: Tabellarische Gesamtansicht aller Tiere mit allen Informationen
 
-## Datenbankstruktur
 
-### Tabelle: Kontinent
-- `kID` (Primary Key)
-- `Kbezeichnung` (Bezeichnung des Kontinents)
 
-### Tabelle: Gehege
-- `gID` (Primary Key)
-- `GBezeichnung` (Bezeichnung des Geheges)
-- `kontinentID` (Foreign Key zu Kontinent)
 
-### Tabelle: Tierart
-- `tierartID` (Primary Key)
-- `TABezeichnung` (Bezeichnung der Tierart)
 
-### Tabelle: Tiere
-- `tierID` (Primary Key)
-- `Name` (Name des Tieres)
-- `Gewicht` (Gewicht in kg)
-- `Geburtsdatum` (Geburtsdatum)
-- `TierartID` (Foreign Key zu Tierart)
-- `GehegeID` (Foreign Key zu Gehege)
 
-## Voraussetzungen
+📚 Inhalt
 
-1. **XAMPP** (oder anderer MySQL-Server)
-   - MySQL-Server muss laufen
-   - Standard-Port: 3306
-   - Standard-User: root (ohne Passwort)
+Funktionen
 
-2. **.NET 9.0** (oder höher)
-   - Windows Forms Desktop Application
+Datenbankstruktur
 
-3. **NuGet Pakete** (bereits in .csproj enthalten):
-   - MySql.Data (Version 9.5.0)
-   - System.Data.SqlClient (Version 4.9.0)
+Voraussetzungen
 
-## Installation
+Installation
 
-### Schritt 1: Datenbank einrichten
+Bedienung
 
-1. Starten Sie XAMPP und aktivieren Sie den MySQL-Server
-2. Öffnen Sie phpMyAdmin (http://localhost/phpmyadmin)
-3. Importieren Sie die Datei `database_setup.sql` ODER führen Sie das SQL-Skript aus:
-   - Klicken Sie auf "SQL" Tab
-   - Kopieren Sie den Inhalt von `database_setup.sql`
-   - Klicken Sie auf "Ausführen"
+Architektur
 
-Die Datenbank `zoo_verwaltung` wird automatisch erstellt und mit Beispieldaten gefüllt.
+Einschränkungen
 
-### Schritt 2: Verbindungsstring anpassen (falls nötig)
+Erweiterungen
 
-Wenn Ihre MySQL-Konfiguration von den Standardeinstellungen abweicht, passen Sie die Verbindung in `DatabaseHelper.cs` an:
+Entwickler
 
-```csharp
-connectionString = "server=localhost;port=3306;database=zoo_verwaltung;uid=root;pwd=;";
-```
+📌 Funktionen
+<details> <summary><strong>Klicken zum Aufklappen</strong></summary>
 
-Ändern Sie:
-- `server`: Wenn MySQL auf einem anderen Server läuft
-- `port`: Wenn ein anderer Port verwendet wird
-- `uid`: Wenn ein anderer Benutzername verwendet wird
-- `pwd`: Wenn ein Passwort gesetzt ist
+Die App unterstützt vollständiges CRUD:
 
-### Schritt 3: Anwendung starten
+🌍 Kontinente
 
-1. Öffnen Sie die Solution `ZooApp.sln` in Visual Studio
-2. Stellen Sie sicher, dass alle NuGet-Pakete wiederhergestellt werden
-3. Drücken Sie F5 oder klicken Sie auf "Start"
+🏠 Gehege
 
-## Bedienung
+🐾 Tierarten
 
-### Allgemeines Bedienkonzept
+🦁 Tiere
 
-Alle Verwaltungs-Tabs (Kontinent, Gehege, Tierart, Tiere) folgen dem gleichen Prinzip:
+📊 Übersicht (mit Inline-Editing)
 
-1. **Eingabebereich**: Formular links zum Eingeben/Bearbeiten von Daten
-2. **ListBox**: Rechts werden alle vorhandenen Einträge angezeigt
-3. **Buttons**:
-   - **Neu**: Leert die Eingabefelder für einen neuen Eintrag
-   - **Speichern**: Speichert den aktuellen Eintrag (neu oder aktualisiert)
-   - **Löschen**: Löscht den ausgewählten Eintrag (mit Bestätigung)
+</details>
+🗄️ Datenbankstruktur
+<details> <summary><strong>Klicken zum Aufklappen</strong></summary>
+Tabelle: Kontinent
+kID (PK)
+Kbezeichnung
 
-### Workflow
+Tabelle: Gehege
+gID (PK)
+GBezeichnung
+kontinentID (FK → Kontinent)
 
-#### Neuen Eintrag erstellen:
-1. Klicken Sie auf "Neu"
-2. Füllen Sie die Felder aus
-3. Klicken Sie auf "Speichern"
+Tabelle: Tierart
+tierartID (PK)
+TABezeichnung
 
-#### Eintrag bearbeiten:
-1. Wählen Sie einen Eintrag in der ListBox aus
-2. Die Daten werden automatisch in die Eingabefelder geladen
-3. Ändern Sie die gewünschten Felder
-4. Klicken Sie auf "Speichern"
+Tabelle: Tiere
+tierID (PK)
+Name
+Gewicht
+Geburtsdatum
+TierartID (FK)
+GehegeID (FK)
 
-#### Eintrag löschen:
-1. Wählen Sie einen Eintrag in der ListBox aus
-2. Klicken Sie auf "Löschen"
-3. Bestätigen Sie die Löschung
+</details>
+🧰 Voraussetzungen
+<details> <summary><strong>Klicken zum Aufklappen</strong></summary>
 
-### Tab-spezifische Hinweise
+Windows
 
-#### Kontinent-Tab
-- Eingabe: Bezeichnung des Kontinents
-- Beispiel: "Afrika", "Asien", "Europa"
+.NET 9 (oder neuer)
 
-#### Gehege-Tab
-- Eingabe: Bezeichnung und zugehöriger Kontinent (ComboBox)
-- Der Kontinent muss zuerst angelegt sein
-- Beispiel: "Savanne" in "Afrika"
+XAMPP / MySQL
 
-#### Tierart-Tab
-- Eingabe: Bezeichnung der Tierart
-- Beispiel: "Löwe", "Tiger", "Elefant"
+NuGet-Paket: MySql.Data
 
-#### Tiere-Tab
-- Eingabe:
-  - Name des Tieres
-  - Gewicht in kg (Dezimalzahl)
-  - Geburtsdatum (DatePicker)
-  - Tierart (ComboBox)
-  - Gehege (ComboBox)
-- Tierart und Gehege müssen zuerst angelegt sein
+</details>
+🔧 Installation
+<details> <summary><strong>Klicken zum Aufklappen</strong></summary>
+1️⃣ Datenbank importieren
 
-#### Übersicht-Tab
-- Zeigt alle Tiere mit allen Informationen in einer Tabelle
-- Spalten: Tiername, Gewicht, Tierart, Gehege, Kontinent
-- Die Daten werden automatisch bei jeder Änderung aktualisiert
+XAMPP starten
 
-## Technische Details
+phpMyAdmin öffnen
 
-### Architektur
+database_setup.sql importieren
 
-- **DatabaseHelper.cs**: Zentrale Datenbankverbindungsklasse
-  - `GetConnection()`: Erstellt MySQL-Verbindung
-  - `ExecuteNonQuery()`: Führt INSERT, UPDATE, DELETE aus
-  - `GetData()`: Führt SELECT-Abfragen aus und gibt DataTable zurück
+2️⃣ Verbindungsdaten anpassen (falls nötig)
 
-- **Form1.cs**: Hauptformular mit gesamter Geschäftslogik
-  - Separate Regions für jede Entität (Kontinent, Gehege, Tierart, Tiere, Übersicht)
-  - Verwendung von parametrisierten Queries zur SQL-Injection-Vermeidung
+In DB.cs:
 
-- **ComboBoxItem**: Hilfsklasse für Dropdown-Listen
-  - Speichert ID und Anzeigetext getrennt
+private readonly string connStr =
+    "server=localhost;port=3306;database=zoo_verwaltung;uid=root;pwd=;";
 
-### Sicherheit
+3️⃣ Projekt starten
 
-- Alle SQL-Queries verwenden **parametrisierte Statements**
-- Schutz vor SQL-Injection
-- Foreign Key Constraints verhindern inkonsistente Daten
-- Lösch-Bestätigungsdialoge
+Lösung in Visual Studio laden
 
-### Fehlerbehandlung
+F5 drücken
 
-- Try-Catch-Blöcke um alle Datenbankoperationen
-- Benutzerfreundliche Fehlermeldungen
-- Validierung der Eingaben vor dem Speichern
+</details>
+🖥️ Bedienung
+<details> <summary><strong>Klicken zum Aufklappen</strong></summary>
+Jeder Tab besitzt:
+Button	Funktion
+Neu	Felder leeren
+Speichern	Eintrag anlegen/aktualisieren
+Löschen	Eintrag entfernen
+ListBox	Auswahl eines Datensatzes
+Übersicht
 
-## Bekannte Einschränkungen
+Liste aller Tiere
 
-1. **Löschen mit Abhängigkeiten**:
-   - Kontinente können nicht gelöscht werden, wenn Gehege zugeordnet sind
-   - Gehege können nicht gelöscht werden, wenn Tiere zugeordnet sind
-   - Tierarten können nicht gelöscht werden, wenn Tiere zugeordnet sind
-   - Dies ist gewollt (referentielle Integrität)
+Bearbeiten der Spalten Name & Gewicht möglich
 
-2. **Verbindung**:
-   - Die Anwendung geht von einer lokalen MySQL-Installation aus
-   - Bei Verbindungsproblemen wird eine Fehlermeldung angezeigt
+</details>
+🧩 Architektur
+<details> <summary><strong>Klicken zum Aufklappen</strong></summary>
+✔ DB.cs (modern, kurz)
 
-## Erweiterungsmöglichkeiten
+Get() – SELECT
 
-Mögliche zukünftige Features:
-- Suchfunktion in den ListBoxen
-- Export der Übersicht nach Excel/PDF
-- Fotos für Tiere
-- Fütterungsplan
-- Statistiken und Diagramme
-- Multi-User-Verwaltung mit Berechtigungen
+Execute() – INSERT/UPDATE/DELETE
 
-## Entwickler
+Test() – Verbindung testen
 
-Erstellt als Schulprojekt für die Verwaltung eines Zoos mit vollständiger CRUD-Funktionalität.
+✔ Form1.cs (stark verkürzt)
 
-## Lizenz
+übersichtlichere Struktur
 
-Dieses Projekt ist für Bildungszwecke erstellt.
+gemeinsame Hilfsfunktionen:
+
+FillListBox()
+
+FillComboBox()
+
+UpdateStatus()
+
+✔ ComboBoxItem
+
+Speichert ID und Text
+
+ideal für Foreign Keys
+
+</details>
+🚫 Einschränkungen
+<details> <summary><strong>Klicken zum Aufklappen</strong></summary>
+
+Einträge können nur gelöscht werden, wenn keine Abhängigkeiten existieren
+
+In der Übersicht sind nur Name & Gewicht direkt editierbar
+
+</details>
+🚀 Erweiterungen
+<details> <summary><strong>Klicken zum Aufklappen</strong></summary>
+
+Suchfelder
+
+PDF-/Excel-Export
+
+Tierfotos
+
+Fütterungsplan
+
+Statistiken
+
+User-Login & Rollen
+
+</details>
+👤 Entwickler
+<details> <summary><strong>Klicken zum Aufklappen</strong></summary>
+
+Schul-/Ausbildungsprojekt zur Übung von:
+
+C# WinForms
+
+MySQL
+
+CRUD
+
+relationalen Datenbanken
+
+Softwarearchitektur
+
+</details>

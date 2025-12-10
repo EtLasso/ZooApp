@@ -63,6 +63,39 @@ namespace ZooApp
             lblTierName = new Label();
             tabPage5 = new TabPage();
             dgvUebersicht = new DataGridView();
+            tabPage6 = new TabPage();
+            dgvFutter = new DataGridView();
+            btnLadeFutter = new Button();
+            btnFutterNeu = new Button();
+            btnFutterSpeichern = new Button();
+            btnFutterLöschen = new Button();
+            gbFutterDetails = new GroupBox();
+            numFutterBestellmenge = new NumericUpDown();
+            numFutterMindestbestand = new NumericUpDown();
+            numFutterLagerbestand = new NumericUpDown();
+            numFutterPreis = new NumericUpDown();
+            txtFutterEinheit = new TextBox();
+            txtFutterBezeichnung = new TextBox();
+            lblBestellmenge = new Label();
+            lblMindestbestand = new Label();
+            lblLagerbestand = new Label();
+            lblPreis = new Label();
+            lblEinheit = new Label();
+            lblFutterBezeichnung = new Label();
+            tabPage7 = new TabPage();
+            dgvNachbestellung = new DataGridView();
+            btnLadeNachbestellung = new Button();
+            tabPage8 = new TabPage();
+            dgvFutterplan = new DataGridView();
+            cmbTierartFutterplan = new ComboBox();
+            btnLadeFutterplan = new Button();
+            lblTierartFutterplan = new Label();
+            tabPage9 = new TabPage();
+            dgvTagesbedarf = new DataGridView();
+            btnLadeTagesbedarf = new Button();
+            tabPage10 = new TabPage();
+            dgvBestellungen = new DataGridView();
+            btnLadeBestellungen = new Button();
             statusStrip1 = new StatusStrip();
             lblStatus = new ToolStripStatusLabel();
             panelHeader = new Panel();
@@ -78,6 +111,21 @@ namespace ZooApp
             gbTiere.SuspendLayout();
             tabPage5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvUebersicht).BeginInit();
+            tabPage6.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvFutter).BeginInit();
+            gbFutterDetails.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)numFutterBestellmenge).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numFutterMindestbestand).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numFutterLagerbestand).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numFutterPreis).BeginInit();
+            tabPage7.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvNachbestellung).BeginInit();
+            tabPage8.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvFutterplan).BeginInit();
+            tabPage9.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvTagesbedarf).BeginInit();
+            tabPage10.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvBestellungen).BeginInit();
             statusStrip1.SuspendLayout();
             panelHeader.SuspendLayout();
             SuspendLayout();
@@ -96,6 +144,11 @@ namespace ZooApp
             tabControl1.Controls.Add(tabPage3);
             tabControl1.Controls.Add(tabPage1);
             tabControl1.Controls.Add(tabPage5);
+            tabControl1.Controls.Add(tabPage6);
+            tabControl1.Controls.Add(tabPage7);
+            tabControl1.Controls.Add(tabPage8);
+            tabControl1.Controls.Add(tabPage9);
+            tabControl1.Controls.Add(tabPage10);
             tabControl1.Dock = DockStyle.Fill;
             tabControl1.Font = new Font("Segoe UI", 10F);
             tabControl1.Location = new Point(0, 70);
@@ -564,7 +617,6 @@ namespace ZooApp
             cmbTierartTiere.Name = "cmbTierartTiere";
             cmbTierartTiere.Size = new Size(200, 25);
             cmbTierartTiere.TabIndex = 8;
-            
             // 
             // dtpGeburtsdatum
             // 
@@ -590,7 +642,6 @@ namespace ZooApp
             txtTierName.Name = "txtTierName";
             txtTierName.Size = new Size(200, 25);
             txtTierName.TabIndex = 5;
-            
             // 
             // lblGehegeTiere
             // 
@@ -651,7 +702,7 @@ namespace ZooApp
             tabPage5.Padding = new Padding(15);
             tabPage5.Size = new Size(1192, 624);
             tabPage5.TabIndex = 4;
-            tabPage5.Text = "📊 Übersicht";
+            tabPage5.Text = "⑤ 📊 Übersicht";
             // 
             // dgvUebersicht
             // 
@@ -664,12 +715,450 @@ namespace ZooApp
             dgvUebersicht.Dock = DockStyle.Fill;
             dgvUebersicht.Location = new Point(15, 15);
             dgvUebersicht.Name = "dgvUebersicht";
-            dgvUebersicht.ReadOnly = false;  // Editierbar!
+            dgvUebersicht.ReadOnly = false;
             dgvUebersicht.RowHeadersWidth = 51;
             dgvUebersicht.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvUebersicht.Size = new Size(1162, 594);
             dgvUebersicht.TabIndex = 0;
             dgvUebersicht.CellValueChanged += dgvUebersicht_CellValueChanged;
+            // 
+            // tabPage6
+            // 
+            tabPage6.BackColor = Color.WhiteSmoke;
+            tabPage6.Controls.Add(dgvFutter);
+            tabPage6.Controls.Add(btnLadeFutter);
+            tabPage6.Controls.Add(btnFutterNeu);
+            tabPage6.Controls.Add(btnFutterSpeichern);
+            tabPage6.Controls.Add(btnFutterLöschen);
+            tabPage6.Controls.Add(gbFutterDetails);
+            tabPage6.Location = new Point(4, 30);
+            tabPage6.Name = "tabPage6";
+            tabPage6.Padding = new Padding(15);
+            tabPage6.Size = new Size(1192, 624);
+            tabPage6.TabIndex = 5;
+            tabPage6.Text = "⑥ 🍎 Futterverwaltung";
+            // 
+            // dgvFutter
+            // 
+            dgvFutter.AllowUserToAddRows = false;
+            dgvFutter.AllowUserToDeleteRows = false;
+            dgvFutter.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvFutter.BackgroundColor = Color.White;
+            dgvFutter.BorderStyle = BorderStyle.None;
+            dgvFutter.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvFutter.Location = new Point(410, 15);
+            dgvFutter.Name = "dgvFutter";
+            dgvFutter.ReadOnly = true;
+            dgvFutter.RowHeadersWidth = 51;
+            dgvFutter.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvFutter.Size = new Size(760, 580);
+            dgvFutter.TabIndex = 11;
+            dgvFutter.SelectionChanged += dgvFutter_SelectionChanged;
+            // 
+            // btnLadeFutter
+            // 
+            btnLadeFutter.BackColor = Color.FromArgb(155, 89, 182);
+            btnLadeFutter.Cursor = Cursors.Hand;
+            btnLadeFutter.FlatAppearance.BorderSize = 0;
+            btnLadeFutter.FlatStyle = FlatStyle.Flat;
+            btnLadeFutter.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnLadeFutter.ForeColor = Color.White;
+            btnLadeFutter.Location = new Point(280, 350);
+            btnLadeFutter.Name = "btnLadeFutter";
+            btnLadeFutter.Size = new Size(115, 45);
+            btnLadeFutter.TabIndex = 10;
+            btnLadeFutter.Text = "🔄 Laden";
+            btnLadeFutter.UseVisualStyleBackColor = false;
+            btnLadeFutter.Click += btnLadeFutter_Click;
+            // 
+            // btnFutterNeu
+            // 
+            btnFutterNeu.BackColor = Color.FromArgb(52, 152, 219);
+            btnFutterNeu.Cursor = Cursors.Hand;
+            btnFutterNeu.FlatAppearance.BorderSize = 0;
+            btnFutterNeu.FlatStyle = FlatStyle.Flat;
+            btnFutterNeu.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnFutterNeu.ForeColor = Color.White;
+            btnFutterNeu.Location = new Point(15, 350);
+            btnFutterNeu.Name = "btnFutterNeu";
+            btnFutterNeu.Size = new Size(115, 45);
+            btnFutterNeu.TabIndex = 9;
+            btnFutterNeu.Text = "✨ Neu";
+            btnFutterNeu.UseVisualStyleBackColor = false;
+            btnFutterNeu.Click += btnFutterNeu_Click;
+            // 
+            // btnFutterSpeichern
+            // 
+            btnFutterSpeichern.BackColor = Color.FromArgb(46, 204, 113);
+            btnFutterSpeichern.Cursor = Cursors.Hand;
+            btnFutterSpeichern.FlatAppearance.BorderSize = 0;
+            btnFutterSpeichern.FlatStyle = FlatStyle.Flat;
+            btnFutterSpeichern.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnFutterSpeichern.ForeColor = Color.White;
+            btnFutterSpeichern.Location = new Point(140, 350);
+            btnFutterSpeichern.Name = "btnFutterSpeichern";
+            btnFutterSpeichern.Size = new Size(130, 45);
+            btnFutterSpeichern.TabIndex = 8;
+            btnFutterSpeichern.Text = "💾 Speichern";
+            btnFutterSpeichern.UseVisualStyleBackColor = false;
+            btnFutterSpeichern.Click += btnFutterSpeichern_Click;
+            // 
+            // btnFutterLöschen
+            // 
+            btnFutterLöschen.BackColor = Color.FromArgb(231, 76, 60);
+            btnFutterLöschen.Cursor = Cursors.Hand;
+            btnFutterLöschen.FlatAppearance.BorderSize = 0;
+            btnFutterLöschen.FlatStyle = FlatStyle.Flat;
+            btnFutterLöschen.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnFutterLöschen.ForeColor = Color.White;
+            btnFutterLöschen.Location = new Point(280, 400);
+            btnFutterLöschen.Name = "btnFutterLöschen";
+            btnFutterLöschen.Size = new Size(115, 45);
+            btnFutterLöschen.TabIndex = 7;
+            btnFutterLöschen.Text = "🗑️ Löschen";
+            btnFutterLöschen.UseVisualStyleBackColor = false;
+            btnFutterLöschen.Click += btnFutterLöschen_Click;
+            // 
+            // gbFutterDetails
+            // 
+            gbFutterDetails.BackColor = Color.White;
+            gbFutterDetails.Controls.Add(numFutterBestellmenge);
+            gbFutterDetails.Controls.Add(numFutterMindestbestand);
+            gbFutterDetails.Controls.Add(numFutterLagerbestand);
+            gbFutterDetails.Controls.Add(numFutterPreis);
+            gbFutterDetails.Controls.Add(txtFutterEinheit);
+            gbFutterDetails.Controls.Add(txtFutterBezeichnung);
+            gbFutterDetails.Controls.Add(lblBestellmenge);
+            gbFutterDetails.Controls.Add(lblMindestbestand);
+            gbFutterDetails.Controls.Add(lblLagerbestand);
+            gbFutterDetails.Controls.Add(lblPreis);
+            gbFutterDetails.Controls.Add(lblEinheit);
+            gbFutterDetails.Controls.Add(lblFutterBezeichnung);
+            gbFutterDetails.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            gbFutterDetails.Location = new Point(15, 15);
+            gbFutterDetails.Name = "gbFutterDetails";
+            gbFutterDetails.Padding = new Padding(15);
+            gbFutterDetails.Size = new Size(380, 320);
+            gbFutterDetails.TabIndex = 0;
+            gbFutterDetails.TabStop = false;
+            gbFutterDetails.Text = "Futter Details";
+            // 
+            // numFutterBestellmenge
+            // 
+            numFutterBestellmenge.Font = new Font("Segoe UI", 10F);
+            numFutterBestellmenge.Location = new Point(160, 267);
+            numFutterBestellmenge.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
+            numFutterBestellmenge.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            numFutterBestellmenge.Name = "numFutterBestellmenge";
+            numFutterBestellmenge.Size = new Size(200, 25);
+            numFutterBestellmenge.TabIndex = 11;
+            numFutterBestellmenge.Value = new decimal(new int[] { 100, 0, 0, 0 });
+            // 
+            // numFutterMindestbestand
+            // 
+            numFutterMindestbestand.Font = new Font("Segoe UI", 10F);
+            numFutterMindestbestand.Location = new Point(160, 227);
+            numFutterMindestbestand.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
+            numFutterMindestbestand.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            numFutterMindestbestand.Name = "numFutterMindestbestand";
+            numFutterMindestbestand.Size = new Size(200, 25);
+            numFutterMindestbestand.TabIndex = 10;
+            numFutterMindestbestand.Value = new decimal(new int[] { 50, 0, 0, 0 });
+            // 
+            // numFutterLagerbestand
+            // 
+            numFutterLagerbestand.Font = new Font("Segoe UI", 10F);
+            numFutterLagerbestand.Location = new Point(160, 187);
+            numFutterLagerbestand.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
+            numFutterLagerbestand.Name = "numFutterLagerbestand";
+            numFutterLagerbestand.Size = new Size(200, 25);
+            numFutterLagerbestand.TabIndex = 9;
+            // 
+            // numFutterPreis
+            // 
+            numFutterPreis.DecimalPlaces = 2;
+            numFutterPreis.Font = new Font("Segoe UI", 10F);
+            numFutterPreis.Location = new Point(160, 147);
+            numFutterPreis.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
+            numFutterPreis.Name = "numFutterPreis";
+            numFutterPreis.Size = new Size(200, 25);
+            numFutterPreis.TabIndex = 8;
+            numFutterPreis.Value = new decimal(new int[] { 1, 0, 0, 0 });
+            // 
+            // txtFutterEinheit
+            // 
+            txtFutterEinheit.Font = new Font("Segoe UI", 10F);
+            txtFutterEinheit.Location = new Point(160, 107);
+            txtFutterEinheit.Name = "txtFutterEinheit";
+            txtFutterEinheit.Size = new Size(200, 25);
+            txtFutterEinheit.TabIndex = 7;
+            txtFutterEinheit.Text = "kg";
+            // 
+            // txtFutterBezeichnung
+            // 
+            txtFutterBezeichnung.Font = new Font("Segoe UI", 10F);
+            txtFutterBezeichnung.Location = new Point(160, 67);
+            txtFutterBezeichnung.Name = "txtFutterBezeichnung";
+            txtFutterBezeichnung.Size = new Size(200, 25);
+            txtFutterBezeichnung.TabIndex = 6;
+            // 
+            // lblBestellmenge
+            // 
+            lblBestellmenge.AutoSize = true;
+            lblBestellmenge.Font = new Font("Segoe UI", 10F);
+            lblBestellmenge.Location = new Point(20, 270);
+            lblBestellmenge.Name = "lblBestellmenge";
+            lblBestellmenge.Size = new Size(95, 19);
+            lblBestellmenge.TabIndex = 5;
+            lblBestellmenge.Text = "Bestellmenge:";
+            // 
+            // lblMindestbestand
+            // 
+            lblMindestbestand.AutoSize = true;
+            lblMindestbestand.Font = new Font("Segoe UI", 10F);
+            lblMindestbestand.Location = new Point(20, 230);
+            lblMindestbestand.Name = "lblMindestbestand";
+            lblMindestbestand.Size = new Size(121, 19);
+            lblMindestbestand.TabIndex = 4;
+            lblMindestbestand.Text = "Mindestbestand:";
+            // 
+            // lblLagerbestand
+            // 
+            lblLagerbestand.AutoSize = true;
+            lblLagerbestand.Font = new Font("Segoe UI", 10F);
+            lblLagerbestand.Location = new Point(20, 190);
+            lblLagerbestand.Name = "lblLagerbestand";
+            lblLagerbestand.Size = new Size(98, 19);
+            lblLagerbestand.TabIndex = 3;
+            lblLagerbestand.Text = "Lagerbestand:";
+            // 
+            // lblPreis
+            // 
+            lblPreis.AutoSize = true;
+            lblPreis.Font = new Font("Segoe UI", 10F);
+            lblPreis.Location = new Point(20, 150);
+            lblPreis.Name = "lblPreis";
+            lblPreis.Size = new Size(91, 19);
+            lblPreis.TabIndex = 2;
+            lblPreis.Text = "Preis (pro €):";
+            // 
+            // lblEinheit
+            // 
+            lblEinheit.AutoSize = true;
+            lblEinheit.Font = new Font("Segoe UI", 10F);
+            lblEinheit.Location = new Point(20, 110);
+            lblEinheit.Name = "lblEinheit";
+            lblEinheit.Size = new Size(55, 19);
+            lblEinheit.TabIndex = 1;
+            lblEinheit.Text = "Einheit:";
+            // 
+            // lblFutterBezeichnung
+            // 
+            lblFutterBezeichnung.AutoSize = true;
+            lblFutterBezeichnung.Font = new Font("Segoe UI", 10F);
+            lblFutterBezeichnung.Location = new Point(20, 70);
+            lblFutterBezeichnung.Name = "lblFutterBezeichnung";
+            lblFutterBezeichnung.Size = new Size(89, 19);
+            lblFutterBezeichnung.TabIndex = 0;
+            lblFutterBezeichnung.Text = "Bezeichnung:";
+            // 
+            // tabPage7
+            // 
+            tabPage7.BackColor = Color.WhiteSmoke;
+            tabPage7.Controls.Add(dgvNachbestellung);
+            tabPage7.Controls.Add(btnLadeNachbestellung);
+            tabPage7.Location = new Point(4, 30);
+            tabPage7.Name = "tabPage7";
+            tabPage7.Padding = new Padding(15);
+            tabPage7.Size = new Size(1192, 624);
+            tabPage7.TabIndex = 6;
+            tabPage7.Text = "⑦ ⚠️ Nachbestellung";
+            // 
+            // dgvNachbestellung
+            // 
+            dgvNachbestellung.AllowUserToAddRows = false;
+            dgvNachbestellung.AllowUserToDeleteRows = false;
+            dgvNachbestellung.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvNachbestellung.BackgroundColor = Color.White;
+            dgvNachbestellung.BorderStyle = BorderStyle.None;
+            dgvNachbestellung.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvNachbestellung.Location = new Point(15, 70);
+            dgvNachbestellung.Name = "dgvNachbestellung";
+            dgvNachbestellung.ReadOnly = true;
+            dgvNachbestellung.RowHeadersWidth = 51;
+            dgvNachbestellung.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvNachbestellung.Size = new Size(1162, 539);
+            dgvNachbestellung.TabIndex = 3;
+            // 
+            // btnLadeNachbestellung
+            // 
+            btnLadeNachbestellung.BackColor = Color.FromArgb(155, 89, 182);
+            btnLadeNachbestellung.Cursor = Cursors.Hand;
+            btnLadeNachbestellung.FlatAppearance.BorderSize = 0;
+            btnLadeNachbestellung.FlatStyle = FlatStyle.Flat;
+            btnLadeNachbestellung.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnLadeNachbestellung.ForeColor = Color.White;
+            btnLadeNachbestellung.Location = new Point(15, 15);
+            btnLadeNachbestellung.Name = "btnLadeNachbestellung";
+            btnLadeNachbestellung.Size = new Size(200, 45);
+            btnLadeNachbestellung.TabIndex = 2;
+            btnLadeNachbestellung.Text = "🔄 Liste laden";
+            btnLadeNachbestellung.UseVisualStyleBackColor = false;
+            btnLadeNachbestellung.Click += btnLadeNachbestellung_Click;
+            // 
+            // tabPage8
+            // 
+            tabPage8.BackColor = Color.WhiteSmoke;
+            tabPage8.Controls.Add(dgvFutterplan);
+            tabPage8.Controls.Add(cmbTierartFutterplan);
+            tabPage8.Controls.Add(btnLadeFutterplan);
+            tabPage8.Controls.Add(lblTierartFutterplan);
+            tabPage8.Location = new Point(4, 30);
+            tabPage8.Name = "tabPage8";
+            tabPage8.Padding = new Padding(15);
+            tabPage8.Size = new Size(1192, 624);
+            tabPage8.TabIndex = 7;
+            tabPage8.Text = "⑧ 🍽️ Fütterungsplan";
+            // 
+            // dgvFutterplan
+            // 
+            dgvFutterplan.AllowUserToAddRows = false;
+            dgvFutterplan.AllowUserToDeleteRows = false;
+            dgvFutterplan.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvFutterplan.BackgroundColor = Color.White;
+            dgvFutterplan.BorderStyle = BorderStyle.None;
+            dgvFutterplan.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvFutterplan.Location = new Point(15, 100);
+            dgvFutterplan.Name = "dgvFutterplan";
+            dgvFutterplan.ReadOnly = true;
+            dgvFutterplan.RowHeadersWidth = 51;
+            dgvFutterplan.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvFutterplan.Size = new Size(1162, 509);
+            dgvFutterplan.TabIndex = 7;
+            // 
+            // cmbTierartFutterplan
+            // 
+            cmbTierartFutterplan.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbTierartFutterplan.Font = new Font("Segoe UI", 10F);
+            cmbTierartFutterplan.FormattingEnabled = true;
+            cmbTierartFutterplan.Location = new Point(120, 55);
+            cmbTierartFutterplan.Name = "cmbTierartFutterplan";
+            cmbTierartFutterplan.Size = new Size(300, 25);
+            cmbTierartFutterplan.TabIndex = 6;
+            // 
+            // btnLadeFutterplan
+            // 
+            btnLadeFutterplan.BackColor = Color.FromArgb(155, 89, 182);
+            btnLadeFutterplan.Cursor = Cursors.Hand;
+            btnLadeFutterplan.FlatAppearance.BorderSize = 0;
+            btnLadeFutterplan.FlatStyle = FlatStyle.Flat;
+            btnLadeFutterplan.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnLadeFutterplan.ForeColor = Color.White;
+            btnLadeFutterplan.Location = new Point(15, 15);
+            btnLadeFutterplan.Name = "btnLadeFutterplan";
+            btnLadeFutterplan.Size = new Size(200, 30);
+            btnLadeFutterplan.TabIndex = 5;
+            btnLadeFutterplan.Text = "🔄 Plan laden";
+            btnLadeFutterplan.UseVisualStyleBackColor = false;
+            btnLadeFutterplan.Click += btnLadeFutterplan_Click;
+            // 
+            // lblTierartFutterplan
+            // 
+            lblTierartFutterplan.AutoSize = true;
+            lblTierartFutterplan.Font = new Font("Segoe UI", 10F);
+            lblTierartFutterplan.Location = new Point(15, 58);
+            lblTierartFutterplan.Name = "lblTierartFutterplan";
+            lblTierartFutterplan.Size = new Size(99, 19);
+            lblTierartFutterplan.TabIndex = 4;
+            lblTierartFutterplan.Text = "Tierart wählen:";
+            // 
+            // tabPage9
+            // 
+            tabPage9.BackColor = Color.WhiteSmoke;
+            tabPage9.Controls.Add(dgvTagesbedarf);
+            tabPage9.Controls.Add(btnLadeTagesbedarf);
+            tabPage9.Location = new Point(4, 30);
+            tabPage9.Name = "tabPage9";
+            tabPage9.Padding = new Padding(15);
+            tabPage9.Size = new Size(1192, 624);
+            tabPage9.TabIndex = 8;
+            tabPage9.Text = "⑨ 📈 Tagesbedarf";
+            // 
+            // dgvTagesbedarf
+            // 
+            dgvTagesbedarf.AllowUserToAddRows = false;
+            dgvTagesbedarf.AllowUserToDeleteRows = false;
+            dgvTagesbedarf.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvTagesbedarf.BackgroundColor = Color.White;
+            dgvTagesbedarf.BorderStyle = BorderStyle.None;
+            dgvTagesbedarf.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvTagesbedarf.Location = new Point(15, 70);
+            dgvTagesbedarf.Name = "dgvTagesbedarf";
+            dgvTagesbedarf.ReadOnly = true;
+            dgvTagesbedarf.RowHeadersWidth = 51;
+            dgvTagesbedarf.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvTagesbedarf.Size = new Size(1162, 539);
+            dgvTagesbedarf.TabIndex = 5;
+            // 
+            // btnLadeTagesbedarf
+            // 
+            btnLadeTagesbedarf.BackColor = Color.FromArgb(155, 89, 182);
+            btnLadeTagesbedarf.Cursor = Cursors.Hand;
+            btnLadeTagesbedarf.FlatAppearance.BorderSize = 0;
+            btnLadeTagesbedarf.FlatStyle = FlatStyle.Flat;
+            btnLadeTagesbedarf.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnLadeTagesbedarf.ForeColor = Color.White;
+            btnLadeTagesbedarf.Location = new Point(15, 15);
+            btnLadeTagesbedarf.Name = "btnLadeTagesbedarf";
+            btnLadeTagesbedarf.Size = new Size(200, 45);
+            btnLadeTagesbedarf.TabIndex = 4;
+            btnLadeTagesbedarf.Text = "🔄 Bedarf laden";
+            btnLadeTagesbedarf.UseVisualStyleBackColor = false;
+            btnLadeTagesbedarf.Click += btnLadeTagesbedarf_Click;
+            // 
+            // tabPage10
+            // 
+            tabPage10.BackColor = Color.WhiteSmoke;
+            tabPage10.Controls.Add(dgvBestellungen);
+            tabPage10.Controls.Add(btnLadeBestellungen);
+            tabPage10.Location = new Point(4, 30);
+            tabPage10.Name = "tabPage10";
+            tabPage10.Padding = new Padding(15);
+            tabPage10.Size = new Size(1192, 624);
+            tabPage10.TabIndex = 9;
+            tabPage10.Text = "⑩ 📦 Bestellungen";
+            // 
+            // dgvBestellungen
+            // 
+            dgvBestellungen.AllowUserToAddRows = false;
+            dgvBestellungen.AllowUserToDeleteRows = false;
+            dgvBestellungen.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvBestellungen.BackgroundColor = Color.White;
+            dgvBestellungen.BorderStyle = BorderStyle.None;
+            dgvBestellungen.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvBestellungen.Location = new Point(15, 70);
+            dgvBestellungen.Name = "dgvBestellungen";
+            dgvBestellungen.ReadOnly = true;
+            dgvBestellungen.RowHeadersWidth = 51;
+            dgvBestellungen.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvBestellungen.Size = new Size(1162, 539);
+            dgvBestellungen.TabIndex = 7;
+            // 
+            // btnLadeBestellungen
+            // 
+            btnLadeBestellungen.BackColor = Color.FromArgb(155, 89, 182);
+            btnLadeBestellungen.Cursor = Cursors.Hand;
+            btnLadeBestellungen.FlatAppearance.BorderSize = 0;
+            btnLadeBestellungen.FlatStyle = FlatStyle.Flat;
+            btnLadeBestellungen.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnLadeBestellungen.ForeColor = Color.White;
+            btnLadeBestellungen.Location = new Point(15, 15);
+            btnLadeBestellungen.Name = "btnLadeBestellungen";
+            btnLadeBestellungen.Size = new Size(200, 45);
+            btnLadeBestellungen.TabIndex = 6;
+            btnLadeBestellungen.Text = "🔄 Bestellungen laden";
+            btnLadeBestellungen.UseVisualStyleBackColor = false;
+            btnLadeBestellungen.Click += btnLadeBestellungen_Click;
             // 
             // statusStrip1
             // 
@@ -695,7 +1184,6 @@ namespace ZooApp
             panelHeader.Name = "panelHeader";
             panelHeader.Size = new Size(1200, 70);
             panelHeader.TabIndex = 2;
-            
             // 
             // lblTitle
             // 
@@ -708,7 +1196,6 @@ namespace ZooApp
             lblTitle.Size = new Size(314, 45);
             lblTitle.TabIndex = 0;
             lblTitle.Text = "🦁 Zoo Verwaltung";
-            
             // 
             // Form1
             // 
@@ -739,6 +1226,23 @@ namespace ZooApp
             gbTiere.PerformLayout();
             tabPage5.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvUebersicht).EndInit();
+            tabPage6.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dgvFutter).EndInit();
+            gbFutterDetails.ResumeLayout(false);
+            gbFutterDetails.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)numFutterBestellmenge).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numFutterMindestbestand).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numFutterLagerbestand).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numFutterPreis).EndInit();
+            tabPage7.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dgvNachbestellung).EndInit();
+            tabPage8.ResumeLayout(false);
+            tabPage8.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvFutterplan).EndInit();
+            tabPage9.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dgvTagesbedarf).EndInit();
+            tabPage10.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dgvBestellungen).EndInit();
             statusStrip1.ResumeLayout(false);
             statusStrip1.PerformLayout();
             panelHeader.ResumeLayout(false);
@@ -795,6 +1299,39 @@ namespace ZooApp
         private Label lblTABezeichnung;
         private TextBox txtKBezeichnung;
         private Label lblKBezeichnung;
+        private TabPage tabPage6;
+        private TabPage tabPage7;
+        private TabPage tabPage8;
+        private TabPage tabPage9;
+        private TabPage tabPage10;
+        private GroupBox gbFutterDetails;
+        private NumericUpDown numFutterBestellmenge;
+        private NumericUpDown numFutterMindestbestand;
+        private NumericUpDown numFutterLagerbestand;
+        private NumericUpDown numFutterPreis;
+        private TextBox txtFutterEinheit;
+        private TextBox txtFutterBezeichnung;
+        private Label lblBestellmenge;
+        private Label lblMindestbestand;
+        private Label lblLagerbestand;
+        private Label lblPreis;
+        private Label lblEinheit;
+        private Label lblFutterBezeichnung;
+        private Button btnFutterLöschen;
+        private Button btnLadeFutter;
+        private Button btnFutterNeu;
+        private Button btnFutterSpeichern;
+        private DataGridView dgvFutter;
+        private DataGridView dgvNachbestellung;
+        private Button btnLadeNachbestellung;
+        private DataGridView dgvFutterplan;
+        private ComboBox cmbTierartFutterplan;
+        private Button btnLadeFutterplan;
+        private Label lblTierartFutterplan;
+        private DataGridView dgvTagesbedarf;
+        private Button btnLadeTagesbedarf;
+        private DataGridView dgvBestellungen;
+        private Button btnLadeBestellungen;
         private StatusStrip statusStrip1;
         private ToolStripStatusLabel lblStatus;
         private Panel panelHeader;

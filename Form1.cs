@@ -3,19 +3,15 @@ using System.Windows.Forms;
 
 namespace ZooApp
 {
-    /// <summary>
-    /// Hauptformular der Zoo-Verwaltungs-Anwendung
-    /// Verwaltet Kontinente, Gehege, Tierarten, Tiere und Futter
-    /// </summary>
+    // Hauptformular der Zoo-Verwaltung
     public partial class Form1 : Form
     {
-        #region Private Felder - Datenbank und aktuelle IDs
+        #region Private Felder
 
-        // Datenbankverbindungen
         private readonly DB db = new DB();
         private readonly ZooDB zooDb = new ZooDB();
-
-        // Aktuell ausgewählte IDs für jeden Bereich
+        
+        // Aktuell ausgewählte IDs
         private int currentKontinentId = 0;
         private int currentGehegeId = 0;
         private int currentTierartId = 0;
@@ -24,28 +20,51 @@ namespace ZooApp
 
         #endregion
 
-        #region Konstruktor und Initialisierung
+        #region Initialisierung
 
         public Form1()
         {
             InitializeComponent();
+            
+            // Button zum Erstellen von Futterplänen hinzufügen
+            AddFutterplanButton();
         }
 
-        /// <summary>
-        /// Wird beim Laden des Formulars aufgerufen
-        /// Testet die Datenbankverbindung und lädt alle initialen Daten
-        /// </summary>
+        // Fügt dynamisch einen Button zum Erstellen von Futterplänen hinzu
+        private void AddFutterplanButton()
+        {
+            Button btnFutterplanNeu = new Button
+            {
+                Text = "➕ Fütterungsplan erstellen",
+                Left = 230,
+                Top = 10,
+                Width = 200,
+                Height = 35,
+                BackColor = Color.FromArgb(46, 204, 113),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            
+            btnFutterplanNeu.FlatAppearance.BorderSize = 0;
+            btnFutterplanNeu.Click += btnFutterplanNeu_Click;
+            
+            // Button zum Fütterungsplan-Tab hinzufügen
+            if (tabControl1.TabPages.Count > 7)
+            {
+                tabControl1.TabPages[7].Controls.Add(btnFutterplanNeu);
+            }
+        }
+
+        // Wird beim Laden des Formulars aufgerufen
         private void Form1_Load(object sender, System.EventArgs e)
         {
-            // Verbindung zur Datenbank testen
+            // Datenbankverbindung testen
             if (!db.Test())
             {
-                MessageBox.Show(
-                    "❌ Keine Verbindung zur Datenbank!\n\n" +
-                    "Bitte XAMPP starten und sicherstellen, dass MySQL läuft.",
-                    "Fehler",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                MessageBox.Show("❌ Keine Verbindung zur Datenbank!\n\nBitte XAMPP starten und MySQL läuft.",
+                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 UpdateStatus("❌ Datenbank nicht verbunden");
                 return;
             }
@@ -54,25 +73,19 @@ namespace ZooApp
 
             try
             {
-                // Alle Stammdaten laden
+                // Alle Daten laden
                 LoadKontinente();
                 LoadGehege();
                 LoadTierarten();
                 LoadTiere();
-
-                // ComboBoxen für Dropdowns füllen
                 LoadKontinentComboBox();
                 LoadTierartComboBox();
                 LoadGehegeComboBox();
-
-                // Übersichtstabelle laden
                 LoadUebersicht();
-
-                // Futter-Tab initialisieren
                 LoadTierartComboBoxFutterplan();
                 ClearFutterFields();
 
-                // Alle Tab-Inhalte beim Start laden
+                // Alle Tabs initial laden
                 LoadFutterListe();
                 LoadNachbestellung();
                 LoadFutterplan();
@@ -83,71 +96,35 @@ namespace ZooApp
             }
             catch (System.Exception ex)
             {
-                MessageBox.Show($"Fehler beim Laden der Daten: {ex.Message}",
-                    "Fehler",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                MessageBox.Show($"Fehler beim Laden: {ex.Message}", "Fehler",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        /// <summary>
-        /// Event: Tab wurde gewechselt
-        /// Lädt die Daten für den aktiven Tab automatisch
-        /// </summary>
+        // Tab wurde gewechselt - Daten neu laden
         private void tabControl1_SelectedIndexChanged(object sender, System.EventArgs e)
         {
-            // Verhindere Laden beim Formularstart (bereits in Form1_Load gemacht)
             if (!this.Visible) return;
 
             try
             {
                 switch (tabControl1.SelectedIndex)
                 {
-                    case 0: // Kontinente (bereits geladen)
-                        break;
-                    case 1: // Gehege (bereits geladen)
-                        break;
-                    case 2: // Tierarten (bereits geladen)
-                        break;
-                    case 3: // Tiere (bereits geladen)
-                        break;
-                    case 4: // Übersicht
-                        LoadUebersicht();
-                        UpdateStatus("✅ Übersicht geladen");
-                        break;
-                    case 5: // Futterverwaltung
-                        LoadFutterListe();
-                        UpdateStatus("✅ Futtersorten geladen");
-                        break;
-                    case 6: // Nachbestellung
-                        LoadNachbestellung();
-                        UpdateStatus("✅ Nachbestellliste geladen");
-                        break;
-                    case 7: // Fütterungsplan
-                        LoadFutterplan();
-                        UpdateStatus("✅ Fütterungsplan geladen");
-                        break;
-                    case 8: // Tagesbedarf
-                        LoadTagesbedarf();
-                        UpdateStatus("✅ Tagesbedarf geladen");
-                        break;
-                    case 9: // Bestellungen
-                        LoadBestellungen();
-                        UpdateStatus("✅ Bestellungen geladen");
-                        break;
+                    case 4: LoadUebersicht(); UpdateStatus("✅ Übersicht geladen"); break;
+                    case 5: LoadFutterListe(); UpdateStatus("✅ Futtersorten geladen"); break;
+                    case 6: LoadNachbestellung(); UpdateStatus("✅ Nachbestellliste geladen"); break;
+                    case 7: LoadFutterplan(); UpdateStatus("✅ Fütterungsplan geladen"); break;
+                    case 8: LoadTagesbedarf(); UpdateStatus("✅ Tagesbedarf geladen"); break;
+                    case 9: LoadBestellungen(); UpdateStatus("✅ Bestellungen geladen"); break;
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fehler beim Laden der Daten: {ex.Message}",
-                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Fehler: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        /// <summary>
-        /// Aktualisiert die Statusleiste mit einer neuen Nachricht
-        /// </summary>
-        /// <param name="msg">Anzuzeigende Statusnachricht</param>
+        // Aktualisiert die Statusleiste
         private void UpdateStatus(string msg)
         {
             lblStatus.Text = msg;
@@ -155,17 +132,9 @@ namespace ZooApp
 
         #endregion
 
-        #region Hilfsmethoden - ListBox und ComboBox füllen
+        #region Hilfsmethoden
 
-        /// <summary>
-        /// Füllt eine ListBox mit Daten aus einer DataTable
-        /// Format: "ID - Text"
-        /// </summary>
-        /// <param name="box">Zu füllende ListBox</param>
-        /// <param name="dt">Datenquelle (DataTable)</param>
-        /// <param name="idCol">Name der ID-Spalte</param>
-        /// <param name="textCol">Name der Text-Spalte</param>
-        /// <param name="postfix">Optionaler Text am Ende (z.B. " (aktiv)")</param>
+        // Füllt eine ListBox mit Daten
         private void FillListBox(ListBox box, DataTable dt, string idCol, string textCol, string postfix = "")
         {
             box.Items.Clear();
@@ -177,14 +146,7 @@ namespace ZooApp
             }
         }
 
-        /// <summary>
-        /// Füllt eine ComboBox mit ComboBoxItem-Objekten
-        /// Ermöglicht das Speichern von ID und Text in einem Dropdown
-        /// </summary>
-        /// <param name="box">Zu füllende ComboBox</param>
-        /// <param name="dt">Datenquelle (DataTable)</param>
-        /// <param name="idCol">Name der ID-Spalte</param>
-        /// <param name="textCol">Name der Text-Spalte</param>
+        // Füllt eine ComboBox mit ComboBoxItem-Objekten
         private void FillComboBox(ComboBox box, DataTable dt, string idCol, string textCol)
         {
             box.Items.Clear();
@@ -202,113 +164,76 @@ namespace ZooApp
 
         #endregion
 
-        #region KONTINENTE - Verwaltung von Kontinenten
+        #region KONTINENTE
 
-        /// <summary>
-        /// Lädt alle Kontinente aus der Datenbank und zeigt sie in der ListBox an
-        /// </summary>
+        // Lädt alle Kontinente
         private void LoadKontinente()
         {
             DataTable dt = db.Get("SELECT kID, Kbezeichnung FROM Kontinent ORDER BY Kbezeichnung");
             FillListBox(lbKontinent, dt, "kID", "Kbezeichnung");
         }
 
-        /// <summary>
-        /// Lädt Kontinente in die ComboBox (für Gehege-Zuordnung)
-        /// </summary>
+        // Lädt Kontinente in ComboBox
         private void LoadKontinentComboBox()
         {
             DataTable dt = db.Get("SELECT kID, Kbezeichnung FROM Kontinent ORDER BY Kbezeichnung");
             FillComboBox(cmbKontinentGehege, dt, "kID", "Kbezeichnung");
         }
 
-        /// <summary>
-        /// Leert die Eingabefelder für Kontinente
-        /// Setzt die aktuelle ID zurück
-        /// </summary>
+        // Leert Eingabefelder
         private void ClearKontinentFields()
         {
             txtKBezeichnung.Text = "";
             currentKontinentId = 0;
         }
 
-        /// <summary>
-        /// Event: Button "Neu" für Kontinente
-        /// Bereitet die Eingabe eines neuen Kontinents vor
-        /// </summary>
         private void btnNewKontinent_Click(object sender, System.EventArgs e)
         {
             ClearKontinentFields();
         }
 
-        /// <summary>
-        /// Event: Button "Speichern" für Kontinente
-        /// Erstellt einen neuen Kontinent oder aktualisiert einen bestehenden
-        /// </summary>
+        // Speichert neuen oder bestehenden Kontinent
         private void btnSaveKontinent_Click(object sender, System.EventArgs e)
         {
-            // Validierung: Bezeichnung muss ausgefüllt sein
             if (txtKBezeichnung.Text == "")
             {
                 MessageBox.Show("Bitte Bezeichnung eingeben.");
                 return;
             }
 
-            // Neuen Kontinent anlegen oder bestehenden aktualisieren
             if (currentKontinentId == 0)
-            {
-                // INSERT: Neuer Kontinent
-                db.Execute("INSERT INTO Kontinent (Kbezeichnung) VALUES (@p)",
-                    ("@p", txtKBezeichnung.Text));
-            }
+                db.Execute("INSERT INTO Kontinent (Kbezeichnung) VALUES (@p)", ("@p", txtKBezeichnung.Text));
             else
-            {
-                // UPDATE: Bestehender Kontinent
                 db.Execute("UPDATE Kontinent SET Kbezeichnung=@p WHERE kID=@id",
-                    ("@p", txtKBezeichnung.Text),
-                    ("@id", currentKontinentId));
-            }
+                    ("@p", txtKBezeichnung.Text), ("@id", currentKontinentId));
 
-            // Listen neu laden und Felder leeren
             LoadKontinente();
             LoadKontinentComboBox();
             ClearKontinentFields();
         }
 
-        /// <summary>
-        /// Event: Button "Löschen" für Kontinente
-        /// Löscht den ausgewählten Kontinent nach Bestätigung
-        /// </summary>
+        // Löscht Kontinent nach Bestätigung
         private void btnDelKontinent_Click(object sender, System.EventArgs e)
         {
             if (currentKontinentId == 0) return;
 
-            // Sicherheitsabfrage
             if (MessageBox.Show("Kontinent wirklich löschen?", "Löschen bestätigen",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
-                db.Execute("DELETE FROM Kontinent WHERE kID=@id",
-                    ("@id", currentKontinentId));
+                db.Execute("DELETE FROM Kontinent WHERE kID=@id", ("@id", currentKontinentId));
                 LoadKontinente();
                 LoadKontinentComboBox();
                 ClearKontinentFields();
             }
         }
 
-        /// <summary>
-        /// Event: Kontinent in ListBox wurde ausgewählt
-        /// Lädt die Details des ausgewählten Kontinents in die Eingabefelder
-        /// </summary>
+        // Kontinent wurde ausgewählt
         private void lbKontinent_SelectedIndexChanged(object sender, System.EventArgs e)
         {
             if (lbKontinent.SelectedItem == null) return;
 
-            // ID aus dem Format "ID - Bezeichnung" extrahieren
             currentKontinentId = int.Parse(lbKontinent.SelectedItem.ToString().Split('-')[0].Trim());
-
-            // Daten des Kontinents laden
-            DataTable dt = db.Get("SELECT Kbezeichnung FROM Kontinent WHERE kID=@id",
-                ("@id", currentKontinentId));
+            DataTable dt = db.Get("SELECT Kbezeichnung FROM Kontinent WHERE kID=@id", ("@id", currentKontinentId));
 
             if (dt.Rows.Count > 0)
                 txtKBezeichnung.Text = dt.Rows[0][0].ToString();
@@ -316,12 +241,9 @@ namespace ZooApp
 
         #endregion
 
-        #region GEHEGE - Verwaltung von Gehegen
+        #region GEHEGE
 
-        /// <summary>
-        /// Lädt alle Gehege mit zugehörigem Kontinent
-        /// Zeigt sie im Format "ID - Name (Kontinent)" an
-        /// </summary>
+        // Lädt alle Gehege mit Kontinent
         private void LoadGehege()
         {
             DataTable dt = db.Get(@"
@@ -335,18 +257,13 @@ namespace ZooApp
                 lbGehege.Items.Add($"{r["gID"]} - {r["GBezeichnung"]} ({r["Kontinent"]})");
         }
 
-        /// <summary>
-        /// Lädt Gehege in die ComboBox (für Tier-Zuordnung)
-        /// </summary>
+        // Lädt Gehege in ComboBox
         private void LoadGehegeComboBox()
         {
             DataTable dt = db.Get("SELECT gID, GBezeichnung FROM Gehege ORDER BY GBezeichnung");
             FillComboBox(cmbGehegeTiere, dt, "gID", "GBezeichnung");
         }
 
-        /// <summary>
-        /// Leert die Eingabefelder für Gehege
-        /// </summary>
         private void ClearGehegeFields()
         {
             txtGBezeichnung.Text = "";
@@ -354,54 +271,34 @@ namespace ZooApp
             currentGehegeId = 0;
         }
 
-        /// <summary>
-        /// Event: Button "Neu" für Gehege
-        /// </summary>
         private void btnNewGehege_Click(object sender, System.EventArgs e)
         {
             ClearGehegeFields();
         }
 
-        /// <summary>
-        /// Event: Button "Speichern" für Gehege
-        /// Speichert ein neues oder aktualisiert ein bestehendes Gehege
-        /// </summary>
+        // Speichert Gehege
         private void btnSaveGehege_Click(object sender, System.EventArgs e)
         {
-            // Validierung: Beide Felder müssen ausgefüllt sein
             if (txtGBezeichnung.Text == "" || cmbKontinentGehege.SelectedIndex == -1)
             {
                 MessageBox.Show("Bitte alles ausfüllen.");
                 return;
             }
 
-            // Ausgewählten Kontinent aus ComboBox holen
             int kontinentId = ((ComboBoxItem)cmbKontinentGehege.SelectedItem).Value;
 
             if (currentGehegeId == 0)
-            {
-                // Neues Gehege anlegen
                 db.Execute("INSERT INTO Gehege (GBezeichnung, kontinentID) VALUES (@n,@k)",
-                    ("@n", txtGBezeichnung.Text),
-                    ("@k", kontinentId));
-            }
+                    ("@n", txtGBezeichnung.Text), ("@k", kontinentId));
             else
-            {
-                // Bestehendes Gehege aktualisieren
                 db.Execute("UPDATE Gehege SET GBezeichnung=@n, kontinentID=@k WHERE gID=@id",
-                    ("@n", txtGBezeichnung.Text),
-                    ("@k", kontinentId),
-                    ("@id", currentGehegeId));
-            }
+                    ("@n", txtGBezeichnung.Text), ("@k", kontinentId), ("@id", currentGehegeId));
 
             LoadGehege();
             LoadGehegeComboBox();
             ClearGehegeFields();
         }
 
-        /// <summary>
-        /// Event: Button "Löschen" für Gehege
-        /// </summary>
         private void btnDelGehege_Click(object sender, System.EventArgs e)
         {
             if (currentGehegeId == 0) return;
@@ -409,33 +306,26 @@ namespace ZooApp
             if (MessageBox.Show("Gehege wirklich löschen?", "Löschen bestätigen",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
-                db.Execute("DELETE FROM Gehege WHERE gID=@id",
-                    ("@id", currentGehegeId));
+                db.Execute("DELETE FROM Gehege WHERE gID=@id", ("@id", currentGehegeId));
                 LoadGehege();
                 LoadGehegeComboBox();
                 ClearGehegeFields();
             }
         }
 
-        /// <summary>
-        /// Event: Gehege in ListBox wurde ausgewählt
-        /// Lädt die Details des Geheges in die Eingabefelder
-        /// </summary>
+        // Gehege wurde ausgewählt
         private void lbGehege_SelectedIndexChanged(object sender, System.EventArgs e)
         {
             if (lbGehege.SelectedItem == null) return;
 
             currentGehegeId = int.Parse(lbGehege.SelectedItem.ToString().Split('-')[0].Trim());
-
-            DataTable dt = db.Get("SELECT GBezeichnung, kontinentID FROM Gehege WHERE gID=@id",
-                ("@id", currentGehegeId));
+            DataTable dt = db.Get("SELECT GBezeichnung, kontinentID FROM Gehege WHERE gID=@id", ("@id", currentGehegeId));
 
             if (dt.Rows.Count > 0)
             {
                 txtGBezeichnung.Text = dt.Rows[0]["GBezeichnung"].ToString();
                 int kontinentId = System.Convert.ToInt32(dt.Rows[0]["kontinentID"]);
 
-                // Richtigen Kontinent in ComboBox auswählen
                 foreach (ComboBoxItem it in cmbKontinentGehege.Items)
                     if (it.Value == kontinentId)
                         cmbKontinentGehege.SelectedItem = it;
@@ -444,46 +334,31 @@ namespace ZooApp
 
         #endregion
 
-        #region TIERARTEN - Verwaltung von Tierarten
+        #region TIERARTEN
 
-        /// <summary>
-        /// Lädt alle Tierarten aus der Datenbank
-        /// </summary>
         private void LoadTierarten()
         {
             DataTable dt = db.Get("SELECT tierartID, TABezeichnung FROM Tierart ORDER BY TABezeichnung");
             FillListBox(lbTierart, dt, "tierartID", "TABezeichnung");
         }
 
-        /// <summary>
-        /// Lädt Tierarten in die ComboBox (für Tier-Zuordnung)
-        /// </summary>
         private void LoadTierartComboBox()
         {
             DataTable dt = db.Get("SELECT tierartID, TABezeichnung FROM Tierart ORDER BY TABezeichnung");
             FillComboBox(cmbTierartTiere, dt, "tierartID", "TABezeichnung");
         }
 
-        /// <summary>
-        /// Leert die Eingabefelder für Tierarten
-        /// </summary>
         private void ClearTierartFields()
         {
             txtTABezeichnung.Text = "";
             currentTierartId = 0;
         }
 
-        /// <summary>
-        /// Event: Button "Neu" für Tierarten
-        /// </summary>
         private void btnNewTierart_Click(object sender, System.EventArgs e)
         {
             ClearTierartFields();
         }
 
-        /// <summary>
-        /// Event: Button "Speichern" für Tierarten
-        /// </summary>
         private void btnSaveTierart_Click(object sender, System.EventArgs e)
         {
             if (txtTABezeichnung.Text == "")
@@ -493,25 +368,16 @@ namespace ZooApp
             }
 
             if (currentTierartId == 0)
-            {
-                db.Execute("INSERT INTO Tierart (TABezeichnung) VALUES (@p)",
-                    ("@p", txtTABezeichnung.Text));
-            }
+                db.Execute("INSERT INTO Tierart (TABezeichnung) VALUES (@p)", ("@p", txtTABezeichnung.Text));
             else
-            {
                 db.Execute("UPDATE Tierart SET TABezeichnung=@p WHERE tierartID=@id",
-                    ("@p", txtTABezeichnung.Text),
-                    ("@id", currentTierartId));
-            }
+                    ("@p", txtTABezeichnung.Text), ("@id", currentTierartId));
 
             LoadTierarten();
             LoadTierartComboBox();
             ClearTierartFields();
         }
 
-        /// <summary>
-        /// Event: Button "Löschen" für Tierarten
-        /// </summary>
         private void btnDelTierart_Click(object sender, System.EventArgs e)
         {
             if (currentTierartId == 0) return;
@@ -519,26 +385,19 @@ namespace ZooApp
             if (MessageBox.Show("Tierart wirklich löschen?", "Löschen bestätigen",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
-                db.Execute("DELETE FROM Tierart WHERE tierartID=@id",
-                    ("@id", currentTierartId));
+                db.Execute("DELETE FROM Tierart WHERE tierartID=@id", ("@id", currentTierartId));
                 LoadTierarten();
                 LoadTierartComboBox();
                 ClearTierartFields();
             }
         }
 
-        /// <summary>
-        /// Event: Tierart in ListBox wurde ausgewählt
-        /// Lädt alle Details des Tiers in die Eingabefelder
-        /// </summary>
         private void lbTierart_SelectedIndexChanged(object sender, System.EventArgs e)
         {
             if (lbTierart.SelectedItem == null) return;
 
             currentTierartId = int.Parse(lbTierart.SelectedItem.ToString().Split('-')[0].Trim());
-
-            DataTable dt = db.Get("SELECT TABezeichnung FROM Tierart WHERE tierartID=@id",
-                ("@id", currentTierartId));
+            DataTable dt = db.Get("SELECT TABezeichnung FROM Tierart WHERE tierartID=@id", ("@id", currentTierartId));
 
             if (dt.Rows.Count > 0)
                 txtTABezeichnung.Text = dt.Rows[0][0].ToString();
@@ -546,11 +405,9 @@ namespace ZooApp
 
         #endregion
 
-        #region TIERE - Verwaltung von einzelnen Tieren
+        #region TIERE
 
-        /// <summary>
-        /// Lädt alle Tiere mit Tierart und Gehege
-        /// </summary>
+        // Lädt alle Tiere mit Details
         private void LoadTiere()
         {
             DataTable dt = db.Get(@"
@@ -565,9 +422,6 @@ namespace ZooApp
                 lbTiere.Items.Add($"{r["tierID"]} - {r["Name"]} ({r["TABezeichnung"]}, {r["GBezeichnung"]})");
         }
 
-        /// <summary>
-        /// Leert alle Eingabefelder für Tiere
-        /// </summary>
         private void ClearTiereFields()
         {
             txtTierName.Text = "";
@@ -578,67 +432,41 @@ namespace ZooApp
             currentTierId = 0;
         }
 
-        /// <summary>
-        /// Event: Button "Neu" für Tiere
-        /// </summary>
         private void btnNewTier_Click(object sender, System.EventArgs e)
         {
             ClearTiereFields();
         }
 
-        /// <summary>
-        /// Event: Button "Speichern" für Tiere
-        /// Validiert alle Eingaben und speichert das Tier
-        /// </summary>
+        // Speichert Tier mit Validierung
         private void btnSaveTier_Click(object sender, System.EventArgs e)
         {
-            // Validierung: Alle Felder müssen korrekt ausgefüllt sein
-            if (txtTierName.Text == "" ||
-                txtGewicht.Text == "" ||
+            if (txtTierName.Text == "" || txtGewicht.Text == "" ||
                 !decimal.TryParse(txtGewicht.Text, out decimal gewicht) ||
-                cmbTierartTiere.SelectedIndex == -1 ||
-                cmbGehegeTiere.SelectedIndex == -1)
+                cmbTierartTiere.SelectedIndex == -1 || cmbGehegeTiere.SelectedIndex == -1)
             {
                 MessageBox.Show("Bitte alle Felder korrekt ausfüllen.");
                 return;
             }
 
-            // IDs aus den ComboBoxen holen
             int tierartId = ((ComboBoxItem)cmbTierartTiere.SelectedItem).Value;
             int gehegeId = ((ComboBoxItem)cmbGehegeTiere.SelectedItem).Value;
 
             if (currentTierId == 0)
-            {
-                // Neues Tier anlegen
                 db.Execute(@"INSERT INTO Tiere (Name,Gewicht,Geburtsdatum,TierartID,GehegeID)
                             VALUES (@n,@g,@d,@t,@h)",
-                    ("@n", txtTierName.Text),
-                    ("@g", gewicht),
-                    ("@d", dtpGeburtsdatum.Value),
-                    ("@t", tierartId),
-                    ("@h", gehegeId));
-            }
+                    ("@n", txtTierName.Text), ("@g", gewicht), ("@d", dtpGeburtsdatum.Value),
+                    ("@t", tierartId), ("@h", gehegeId));
             else
-            {
-                // Bestehendes Tier aktualisieren
                 db.Execute(@"UPDATE Tiere SET Name=@n, Gewicht=@g, Geburtsdatum=@d,
                             TierartID=@t, GehegeID=@h WHERE tierID=@id",
-                    ("@n", txtTierName.Text),
-                    ("@g", gewicht),
-                    ("@d", dtpGeburtsdatum.Value),
-                    ("@t", tierartId),
-                    ("@h", gehegeId),
-                    ("@id", currentTierId));
-            }
+                    ("@n", txtTierName.Text), ("@g", gewicht), ("@d", dtpGeburtsdatum.Value),
+                    ("@t", tierartId), ("@h", gehegeId), ("@id", currentTierId));
 
             LoadTiere();
             LoadUebersicht();
             ClearTiereFields();
         }
 
-        /// <summary>
-        /// Event: Button "Löschen" für Tiere
-        /// </summary>
         private void btnDelTier_Click(object sender, System.EventArgs e)
         {
             if (currentTierId == 0) return;
@@ -646,26 +474,20 @@ namespace ZooApp
             if (MessageBox.Show("Tier wirklich löschen?", "Löschen bestätigen",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
-                db.Execute("DELETE FROM Tiere WHERE tierID=@id",
-                    ("@id", currentTierId));
+                db.Execute("DELETE FROM Tiere WHERE tierID=@id", ("@id", currentTierId));
                 LoadTiere();
                 LoadUebersicht();
                 ClearTiereFields();
             }
         }
 
-        /// <summary>
-        /// Event: Tier in ListBox wurde ausgewählt
-        /// Lädt alle Details des Tiers in die Eingabefelder
-        /// </summary>
+        // Tier wurde ausgewählt
         private void lbTiere_SelectedIndexChanged(object sender, System.EventArgs e)
         {
             if (lbTiere.SelectedItem == null) return;
 
             currentTierId = int.Parse(lbTiere.SelectedItem.ToString().Split('-')[0].Trim());
-
-            DataTable dt = db.Get("SELECT * FROM Tiere WHERE tierID=@id",
-                ("@id", currentTierId));
+            DataTable dt = db.Get("SELECT * FROM Tiere WHERE tierID=@id", ("@id", currentTierId));
 
             if (dt.Rows.Count == 0) return;
 
@@ -677,7 +499,6 @@ namespace ZooApp
             int tierartId = System.Convert.ToInt32(r["TierartID"]);
             int gehegeId = System.Convert.ToInt32(r["GehegeID"]);
 
-            // Richtige Einträge in ComboBoxen auswählen
             foreach (ComboBoxItem it in cmbTierartTiere.Items)
                 if (it.Value == tierartId)
                     cmbTierartTiere.SelectedItem = it;
@@ -689,21 +510,14 @@ namespace ZooApp
 
         #endregion
 
-        #region ÜBERSICHT - DataGridView mit allen Tieren
+        #region ÜBERSICHT
 
-        /// <summary>
-        /// Lädt die komplette Tier-Übersicht mit allen verknüpften Daten
-        /// Zeigt: Tier, Gewicht, Tierart, Gehege, Kontinent
-        /// </summary>
+        // Lädt komplette Tier-Übersicht
         private void LoadUebersicht()
         {
             DataTable dt = db.Get(@"
-                SELECT
-                    t.tierID,
-                    t.Name AS Tiername,
-                    t.Gewicht,
-                    ta.TABezeichnung AS Tierart,
-                    g.GBezeichnung AS Gehege,
+                SELECT t.tierID, t.Name AS Tiername, t.Gewicht,
+                    ta.TABezeichnung AS Tierart, g.GBezeichnung AS Gehege,
                     k.Kbezeichnung AS Kontinent
                 FROM Tiere t
                 LEFT JOIN Tierart ta ON t.TierartID = ta.tierartID
@@ -715,10 +529,7 @@ namespace ZooApp
             dgvUebersicht.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         }
 
-        /// <summary>
-        /// Event: Zelle in der Übersicht wurde geändert
-        /// Erlaubt das direkte Bearbeiten von Tiername und Gewicht in der Tabelle
-        /// </summary>
+        // Erlaubt direktes Bearbeiten von Name und Gewicht
         private void dgvUebersicht_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
@@ -731,22 +542,17 @@ namespace ZooApp
             switch (col)
             {
                 case "Tiername":
-                    db.Execute("UPDATE Tiere SET Name=@v WHERE tierID=@id",
-                        ("@v", value),
-                        ("@id", id));
+                    db.Execute("UPDATE Tiere SET Name=@v WHERE tierID=@id", ("@v", value), ("@id", id));
                     break;
 
                 case "Gewicht":
-                    // Validierung: Muss eine Zahl sein
                     if (!decimal.TryParse(value.ToString(), out _))
                     {
                         MessageBox.Show("Ungültiges Gewicht.");
                         LoadUebersicht();
                         return;
                     }
-                    db.Execute("UPDATE Tiere SET Gewicht=@v WHERE tierID=@id",
-                        ("@v", value),
-                        ("@id", id));
+                    db.Execute("UPDATE Tiere SET Gewicht=@v WHERE tierID=@id", ("@v", value), ("@id", id));
                     break;
 
                 default:
@@ -761,12 +567,8 @@ namespace ZooApp
 
         #endregion
 
-        #region FUTTERVERWALTUNG - Verwaltung von Futtersorten
+        #region FUTTERVERWALTUNG
 
-        /// <summary>
-        /// Leert alle Eingabefelder für Futter
-        /// Setzt Standardwerte für Einheit, Preis, etc.
-        /// </summary>
         private void ClearFutterFields()
         {
             txtFutterBezeichnung.Text = "";
@@ -778,26 +580,18 @@ namespace ZooApp
             currentFutterId = 0;
         }
 
-        /// <summary>
-        /// Event: Button "Neu" für Futter
-        /// </summary>
         private void btnFutterNeu_Click(object sender, System.EventArgs e)
         {
             ClearFutterFields();
         }
 
-        /// <summary>
-        /// Event: Button "Laden" für Futterliste
-        /// </summary>
         private void btnLadeFutter_Click(object sender, System.EventArgs e)
         {
             LoadFutterListe();
             UpdateStatus("✅ Futtersorten neu geladen");
         }
 
-        /// <summary>
-        /// Lädt alle Futtersorten mit Details aus der Datenbank
-        /// </summary>
+        // Lädt alle Futtersorten
         private void LoadFutterListe()
         {
             try
@@ -808,18 +602,13 @@ namespace ZooApp
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fehler beim Laden der Futtersorten: {ex.Message}",
-                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Fehler: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        /// <summary>
-        /// Event: Button "Speichern" für Futter
-        /// Erstellt eine neue Futtersorte oder aktualisiert eine bestehende
-        /// </summary>
+        // Speichert Futtersorte
         private void btnFutterSpeichern_Click(object sender, System.EventArgs e)
         {
-            // Validierung
             if (txtFutterBezeichnung.Text == "" || txtFutterEinheit.Text == "")
             {
                 MessageBox.Show("Bitte Bezeichnung und Einheit eingeben.");
@@ -830,39 +619,27 @@ namespace ZooApp
             {
                 if (currentFutterId == 0)
                 {
-                    // Neues Futter anlegen
                     string sql = @"INSERT INTO Futter 
                                 (Bezeichnung, Einheit, Preis_pro_Einheit, Lagerbestand, Mindestbestand, Bestellmenge)
                                 VALUES (@bez, @einheit, @preis, @lager, @mindest, @bestell)";
 
                     db.Execute(sql,
-                        ("@bez", txtFutterBezeichnung.Text),
-                        ("@einheit", txtFutterEinheit.Text),
-                        ("@preis", numFutterPreis.Value),
-                        ("@lager", (int)numFutterLagerbestand.Value),
-                        ("@mindest", (int)numFutterMindestbestand.Value),
-                        ("@bestell", (int)numFutterBestellmenge.Value));
+                        ("@bez", txtFutterBezeichnung.Text), ("@einheit", txtFutterEinheit.Text),
+                        ("@preis", numFutterPreis.Value), ("@lager", (int)numFutterLagerbestand.Value),
+                        ("@mindest", (int)numFutterMindestbestand.Value), ("@bestell", (int)numFutterBestellmenge.Value));
                 }
                 else
                 {
-                    // Bestehendes Futter aktualisieren
-                    string sql = @"UPDATE Futter SET 
-                                Bezeichnung = @bez,
-                                Einheit = @einheit,
-                                Preis_pro_Einheit = @preis,
-                                Lagerbestand = @lager,
-                                Mindestbestand = @mindest,
-                                Bestellmenge = @bestell
-                                WHERE futterID = @id";
+                    string sql = @"UPDATE Futter SET Bezeichnung=@bez, Einheit=@einheit,
+                                Preis_pro_Einheit=@preis, Lagerbestand=@lager,
+                                Mindestbestand=@mindest, Bestellmenge=@bestell
+                                WHERE futterID=@id";
 
                     db.Execute(sql,
-                        ("@bez", txtFutterBezeichnung.Text),
-                        ("@einheit", txtFutterEinheit.Text),
-                        ("@preis", numFutterPreis.Value),
-                        ("@lager", (int)numFutterLagerbestand.Value),
+                        ("@bez", txtFutterBezeichnung.Text), ("@einheit", txtFutterEinheit.Text),
+                        ("@preis", numFutterPreis.Value), ("@lager", (int)numFutterLagerbestand.Value),
                         ("@mindest", (int)numFutterMindestbestand.Value),
-                        ("@bestell", (int)numFutterBestellmenge.Value),
-                        ("@id", currentFutterId));
+                        ("@bestell", (int)numFutterBestellmenge.Value), ("@id", currentFutterId));
                 }
 
                 LoadFutterListe();
@@ -871,14 +648,10 @@ namespace ZooApp
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fehler beim Speichern: {ex.Message}",
-                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Fehler: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        /// <summary>
-        /// Event: Button "Löschen" für Futter
-        /// </summary>
         private void btnFutterLöschen_Click(object sender, System.EventArgs e)
         {
             if (currentFutterId == 0) return;
@@ -888,26 +661,20 @@ namespace ZooApp
             {
                 try
                 {
-                    db.Execute("DELETE FROM Futter WHERE futterID = @id",
-                        ("@id", currentFutterId));
-
+                    db.Execute("DELETE FROM Futter WHERE futterID=@id", ("@id", currentFutterId));
                     LoadFutterListe();
                     ClearFutterFields();
                     UpdateStatus("✅ Futter gelöscht");
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Fehler beim Löschen: {ex.Message}\n\n" +
-                        "Möglicherweise wird dieses Futter noch in Fütterungsplänen verwendet.",
+                    MessageBox.Show($"Fehler: {ex.Message}\n\nMöglicherweise wird dieses Futter noch verwendet.",
                         "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
-        /// <summary>
-        /// Event: Zeile in Futter-DataGridView wurde ausgewählt
-        /// Lädt die Details der Futtersorte in die Eingabefelder
-        /// </summary>
+        // Futtersorte wurde ausgewählt
         private void dgvFutter_SelectionChanged(object sender, EventArgs e)
         {
             if (dgvFutter.SelectedRows.Count > 0)
@@ -925,11 +692,8 @@ namespace ZooApp
 
         #endregion
 
-        #region NACHBESTELLUNG - Anzeige von Futtersorten mit niedrigem Bestand
+        #region NACHBESTELLUNG
 
-        /// <summary>
-        /// Lädt die Nachbestellliste
-        /// </summary>
         private void LoadNachbestellung()
         {
             try
@@ -940,14 +704,10 @@ namespace ZooApp
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fehler beim Laden der Nachbestellung: {ex.Message}",
-                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Fehler: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        /// <summary>
-        /// Event: Button "Nachbestellung laden"
-        /// </summary>
         private void btnLadeNachbestellung_Click(object sender, EventArgs e)
         {
             LoadNachbestellung();
@@ -955,21 +715,16 @@ namespace ZooApp
 
         #endregion
 
-        #region FÜTTERUNGSPLAN - Übersicht der Fütterungspläne
+        #region FÜTTERUNGSPLAN
 
-        /// <summary>
-        /// Lädt Tierarten in die ComboBox für Fütterungsplan-Filter
-        /// Fügt "Alle Tierarten" als erste Option hinzu
-        /// </summary>
+        // Lädt Tierarten für Filterung
         private void LoadTierartComboBoxFutterplan()
         {
             DataTable dt = db.Get("SELECT tierartID, TABezeichnung FROM Tierart ORDER BY TABezeichnung");
             cmbTierartFutterplan.Items.Clear();
 
-            // "Alle" Option hinzufügen
             cmbTierartFutterplan.Items.Add(new ComboBoxItem { Value = 0, Text = "-- Alle Tierarten --" });
 
-            // Tierarten hinzufügen
             foreach (DataRow row in dt.Rows)
             {
                 cmbTierartFutterplan.Items.Add(new ComboBoxItem
@@ -984,9 +739,6 @@ namespace ZooApp
             cmbTierartFutterplan.SelectedIndex = 0;
         }
 
-        /// <summary>
-        /// Lädt den Fütterungsplan
-        /// </summary>
         private void LoadFutterplan()
         {
             try
@@ -995,7 +747,6 @@ namespace ZooApp
 
                 if (cmbTierartFutterplan.SelectedIndex > 0)
                 {
-                    // Fütterungsplan für spezifische Tierart
                     int tierartId = ((ComboBoxItem)cmbTierartFutterplan.SelectedItem).Value;
                     dt = zooDb.GetFutterplanFuerTierart(tierartId);
                     UpdateStatus($"✅ Fütterungsplan für Tierart geladen");
@@ -1004,46 +755,164 @@ namespace ZooApp
                 {
                     // Alle Fütterungspläne laden
                     string sql = @"
-                        SELECT 
-                            ta.TABezeichnung AS Tierart,
-                            f.Bezeichnung AS Futtersorte,
-                            0 AS Menge_pro_Tag,
-                            f.Einheit,
-                            '08:00:00' AS Fütterungszeit,
-                            'Bitte Fütterungsplan einrichten' AS Fütterungsplan
-                        FROM Tierart ta
-                        CROSS JOIN Futter f
-                        WHERE ta.tierartID IN (SELECT tierartID FROM Tierart)
-                        LIMIT 10";
+                        SELECT ta.TABezeichnung AS Tierart, f.Bezeichnung AS Futtersorte,
+                            tf.Menge_pro_Tag, f.Einheit, tf.Fütterungszeit,
+                            CONCAT(tf.Menge_pro_Tag, ' ', f.Einheit, ' um ', tf.Fütterungszeit) AS Fütterungsplan
+                        FROM Tierart_Futter tf
+                        JOIN Tierart ta ON tf.tierartID = ta.tierartID
+                        JOIN Futter f ON tf.futterID = f.futterID
+                        ORDER BY ta.TABezeichnung, tf.Fütterungszeit";
 
                     dt = db.Get(sql);
-                    UpdateStatus($"✅ Fütterungsplan geladen");
+                    UpdateStatus($"✅ Fütterungsplan geladen ({dt.Rows.Count} Einträge)");
                 }
 
                 dgvFutterplan.DataSource = dt;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fehler beim Laden des Fütterungsplans: {ex.Message}",
-                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Fehler: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        /// <summary>
-        /// Event: Button "Fütterungsplan laden"
-        /// </summary>
         private void btnLadeFutterplan_Click(object sender, EventArgs e)
         {
             LoadFutterplan();
         }
 
+        // Öffnet Dialog zum Erstellen eines Fütterungsplans
+        private void btnFutterplanNeu_Click(object sender, EventArgs e)
+        {
+            // Dialog erstellen
+            Form dialog = new Form
+            {
+                Text = "🍽️ Fütterungsplan erstellen",
+                Size = new Size(450, 350),
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                BackColor = Color.White
+            };
+
+            // Labels
+            Label lblTierart = new Label { Text = "Tierart:", Left = 20, Top = 20, Width = 100 };
+            Label lblFutter = new Label { Text = "Futter:", Left = 20, Top = 60, Width = 100 };
+            Label lblMenge = new Label { Text = "Menge pro Tag:", Left = 20, Top = 100, Width = 100 };
+            Label lblZeit = new Label { Text = "Fütterungszeit:", Left = 20, Top = 140, Width = 100 };
+            Label lblEinheit = new Label { Text = "(kg)", Left = 350, Top = 100, Width = 50 };
+
+            // ComboBoxen und Controls
+            ComboBox cmbTierart = new ComboBox { Left = 130, Top = 17, Width = 250, DropDownStyle = ComboBoxStyle.DropDownList };
+            ComboBox cmbFutter = new ComboBox { Left = 130, Top = 57, Width = 250, DropDownStyle = ComboBoxStyle.DropDownList };
+            NumericUpDown numMenge = new NumericUpDown { Left = 130, Top = 97, Width = 210, DecimalPlaces = 2, Minimum = 0.01m, Maximum = 1000, Value = 5, Increment = 0.5m };
+            MaskedTextBox mtxtZeit = new MaskedTextBox { Left = 130, Top = 137, Width = 100, Mask = "00:00", Text = "08:00" };
+
+            // Buttons
+            Button btnSpeichern = new Button { Text = "💾 Speichern", Left = 150, Top = 220, Width = 130, Height = 45 };
+            btnSpeichern.BackColor = Color.FromArgb(46, 204, 113);
+            btnSpeichern.ForeColor = Color.White;
+            btnSpeichern.FlatStyle = FlatStyle.Flat;
+            btnSpeichern.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnSpeichern.Cursor = Cursors.Hand;
+
+            Button btnAbbrechen = new Button { Text = "❌ Abbrechen", Left = 290, Top = 220, Width = 130, Height = 45 };
+            btnAbbrechen.BackColor = Color.FromArgb(231, 76, 60);
+            btnAbbrechen.ForeColor = Color.White;
+            btnAbbrechen.FlatStyle = FlatStyle.Flat;
+            btnAbbrechen.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnAbbrechen.Cursor = Cursors.Hand;
+
+            // Daten laden
+            DataTable dtTierarten = db.Get("SELECT tierartID, TABezeichnung FROM Tierart ORDER BY TABezeichnung");
+            DataTable dtFutter = db.Get("SELECT futterID, Bezeichnung, Einheit FROM Futter ORDER BY Bezeichnung");
+
+            foreach (DataRow row in dtTierarten.Rows)
+            {
+                cmbTierart.Items.Add(new ComboBoxItem
+                {
+                    Value = Convert.ToInt32(row["tierartID"]),
+                    Text = row["TABezeichnung"].ToString()
+                });
+            }
+            cmbTierart.DisplayMember = "Text";
+            cmbTierart.ValueMember = "Value";
+
+            foreach (DataRow row in dtFutter.Rows)
+            {
+                cmbFutter.Items.Add(new ComboBoxItem
+                {
+                    Value = Convert.ToInt32(row["futterID"]),
+                    Text = $"{row["Bezeichnung"]} ({row["Einheit"]})"
+                });
+            }
+            cmbFutter.DisplayMember = "Text";
+            cmbFutter.ValueMember = "Value";
+
+            // Event Handlers
+            btnSpeichern.Click += (s, ev) =>
+            {
+                if (cmbTierart.SelectedIndex == -1 || cmbFutter.SelectedIndex == -1)
+                {
+                    MessageBox.Show("Bitte Tierart und Futter auswählen!", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                int tierartId = ((ComboBoxItem)cmbTierart.SelectedItem).Value;
+                int futterId = ((ComboBoxItem)cmbFutter.SelectedItem).Value;
+                decimal menge = numMenge.Value;
+                string zeit = mtxtZeit.Text + ":00";
+
+                try
+                {
+                    // Prüfen ob schon vorhanden
+                    DataTable check = db.Get(@"SELECT * FROM Tierart_Futter 
+                                              WHERE tierartID=@tid AND futterID=@fid AND Fütterungszeit=@zeit",
+                        ("@tid", tierartId), ("@fid", futterId), ("@zeit", zeit));
+
+                    if (check.Rows.Count > 0)
+                    {
+                        // Update
+                        db.Execute(@"UPDATE Tierart_Futter SET Menge_pro_Tag=@menge 
+                                   WHERE tierartID=@tid AND futterID=@fid AND Fütterungszeit=@zeit",
+                            ("@menge", menge), ("@tid", tierartId), ("@fid", futterId), ("@zeit", zeit));
+                        MessageBox.Show("✅ Fütterungsplan aktualisiert!", "Erfolg", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        // Insert
+                        db.Execute(@"INSERT INTO Tierart_Futter (tierartID, futterID, Menge_pro_Tag, Fütterungszeit) 
+                                   VALUES (@tid, @fid, @menge, @zeit)",
+                            ("@tid", tierartId), ("@fid", futterId), ("@menge", menge), ("@zeit", zeit));
+                        MessageBox.Show("✅ Fütterungsplan erstellt!", "Erfolg", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+
+                    LoadFutterplan();
+                    LoadTagesbedarf();
+                    dialog.Close();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Fehler: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            };
+
+            btnAbbrechen.Click += (s, ev) => dialog.Close();
+
+            // Controls hinzufügen
+            dialog.Controls.AddRange(new Control[] {
+                lblTierart, lblFutter, lblMenge, lblZeit, lblEinheit,
+                cmbTierart, cmbFutter, numMenge, mtxtZeit,
+                btnSpeichern, btnAbbrechen
+            });
+
+            dialog.ShowDialog();
+        }
+
         #endregion
 
-        #region TAGESBEDARF - Anzeige des täglichen Futterbedarfs
+        #region TAGESBEDARF
 
-        /// <summary>
-        /// Lädt den Tagesbedarf
-        /// </summary>
         private void LoadTagesbedarf()
         {
             try
@@ -1054,14 +923,10 @@ namespace ZooApp
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fehler beim Laden des Tagesbedarfs: {ex.Message}",
-                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Fehler: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        /// <summary>
-        /// Event: Button "Tagesbedarf laden"
-        /// </summary>
         private void btnLadeTagesbedarf_Click(object sender, EventArgs e)
         {
             LoadTagesbedarf();
@@ -1069,11 +934,8 @@ namespace ZooApp
 
         #endregion
 
-        #region BESTELLUNGEN - Verwaltung von Futterbestellungen
+        #region BESTELLUNGEN
 
-        /// <summary>
-        /// Lädt die Bestellungen
-        /// </summary>
         private void LoadBestellungen()
         {
             try
@@ -1084,14 +946,10 @@ namespace ZooApp
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fehler beim Laden der Bestellungen: {ex.Message}",
-                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Fehler: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        /// <summary>
-        /// Event: Button "Bestellungen laden"
-        /// </summary>
         private void btnLadeBestellungen_Click(object sender, System.EventArgs e)
         {
             LoadBestellungen();
@@ -1099,13 +957,9 @@ namespace ZooApp
 
         #endregion
 
-        #region Hilfsklasse - ComboBoxItem
+        #region Hilfsklasse
 
-        /// <summary>
-        /// Hilfsklasse für ComboBox-Elemente
-        /// Speichert eine ID (Value) und einen Anzeigetext (Text)
-        /// Wird verwendet, um Dropdowns mit ID-Text-Paaren zu füllen
-        /// </summary>
+        // Für ComboBox mit ID und Text
         public class ComboBoxItem
         {
             public int Value { get; set; }

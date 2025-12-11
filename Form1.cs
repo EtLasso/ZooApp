@@ -1,4 +1,6 @@
+using System;
 using System.Data;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace ZooApp
@@ -50,15 +52,15 @@ namespace ZooApp
             btnFutterplanNeu.FlatAppearance.BorderSize = 0;
             btnFutterplanNeu.Click += btnFutterplanNeu_Click;
             
-            // Button zum Fütterungsplan-Tab hinzufügen
-            if (tabControl1.TabPages.Count > 7)
+            // Button zum Fütterungsplan-Tab hinzufügen (Null-Check)
+            if (tabControl1?.TabPages != null && tabControl1.TabPages.Count > 7)
             {
                 tabControl1.TabPages[7].Controls.Add(btnFutterplanNeu);
             }
         }
 
         // Wird beim Laden des Formulars aufgerufen
-        private void Form1_Load(object sender, System.EventArgs e)
+        private void Form1_Load(object sender, EventArgs e)
         {
             // Datenbankverbindung testen
             if (!db.Test())
@@ -94,15 +96,15 @@ namespace ZooApp
 
                 UpdateStatus("✅ Alle Daten geladen");
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                MessageBox.Show($"Fehler beim Laden: {ex.Message}", "Fehler",
+                MessageBox.Show($"Fehler beim Laden: {ex.Message}\n\nDetails: {ex.StackTrace}", "Fehler",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         // Tab wurde gewechselt - Daten neu laden
-        private void tabControl1_SelectedIndexChanged(object sender, System.EventArgs e)
+        private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (!this.Visible) return;
 
@@ -127,7 +129,8 @@ namespace ZooApp
         // Aktualisiert die Statusleiste
         private void UpdateStatus(string msg)
         {
-            lblStatus.Text = msg;
+            if (lblStatus != null)
+                lblStatus.Text = msg;
         }
 
         #endregion
@@ -154,7 +157,7 @@ namespace ZooApp
             {
                 box.Items.Add(new ComboBoxItem
                 {
-                    Value = System.Convert.ToInt32(row[idCol]),
+                    Value = Convert.ToInt32(row[idCol]),
                     Text = row[textCol].ToString()
                 });
             }
@@ -187,13 +190,13 @@ namespace ZooApp
             currentKontinentId = 0;
         }
 
-        private void btnNewKontinent_Click(object sender, System.EventArgs e)
+        private void btnNewKontinent_Click(object sender, EventArgs e)
         {
             ClearKontinentFields();
         }
 
         // Speichert neuen oder bestehenden Kontinent
-        private void btnSaveKontinent_Click(object sender, System.EventArgs e)
+        private void btnSaveKontinent_Click(object sender, EventArgs e)
         {
             if (txtKBezeichnung.Text == "")
             {
@@ -213,7 +216,7 @@ namespace ZooApp
         }
 
         // Löscht Kontinent nach Bestätigung
-        private void btnDelKontinent_Click(object sender, System.EventArgs e)
+        private void btnDelKontinent_Click(object sender, EventArgs e)
         {
             if (currentKontinentId == 0) return;
 
@@ -228,7 +231,7 @@ namespace ZooApp
         }
 
         // Kontinent wurde ausgewählt
-        private void lbKontinent_SelectedIndexChanged(object sender, System.EventArgs e)
+        private void lbKontinent_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lbKontinent.SelectedItem == null) return;
 
@@ -271,13 +274,13 @@ namespace ZooApp
             currentGehegeId = 0;
         }
 
-        private void btnNewGehege_Click(object sender, System.EventArgs e)
+        private void btnNewGehege_Click(object sender, EventArgs e)
         {
             ClearGehegeFields();
         }
 
         // Speichert Gehege
-        private void btnSaveGehege_Click(object sender, System.EventArgs e)
+        private void btnSaveGehege_Click(object sender, EventArgs e)
         {
             if (txtGBezeichnung.Text == "" || cmbKontinentGehege.SelectedIndex == -1)
             {
@@ -299,7 +302,7 @@ namespace ZooApp
             ClearGehegeFields();
         }
 
-        private void btnDelGehege_Click(object sender, System.EventArgs e)
+        private void btnDelGehege_Click(object sender, EventArgs e)
         {
             if (currentGehegeId == 0) return;
 
@@ -314,7 +317,7 @@ namespace ZooApp
         }
 
         // Gehege wurde ausgewählt
-        private void lbGehege_SelectedIndexChanged(object sender, System.EventArgs e)
+        private void lbGehege_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lbGehege.SelectedItem == null) return;
 
@@ -324,7 +327,7 @@ namespace ZooApp
             if (dt.Rows.Count > 0)
             {
                 txtGBezeichnung.Text = dt.Rows[0]["GBezeichnung"].ToString();
-                int kontinentId = System.Convert.ToInt32(dt.Rows[0]["kontinentID"]);
+                int kontinentId = Convert.ToInt32(dt.Rows[0]["kontinentID"]);
 
                 foreach (ComboBoxItem it in cmbKontinentGehege.Items)
                     if (it.Value == kontinentId)
@@ -354,12 +357,12 @@ namespace ZooApp
             currentTierartId = 0;
         }
 
-        private void btnNewTierart_Click(object sender, System.EventArgs e)
+        private void btnNewTierart_Click(object sender, EventArgs e)
         {
             ClearTierartFields();
         }
 
-        private void btnSaveTierart_Click(object sender, System.EventArgs e)
+        private void btnSaveTierart_Click(object sender, EventArgs e)
         {
             if (txtTABezeichnung.Text == "")
             {
@@ -378,7 +381,7 @@ namespace ZooApp
             ClearTierartFields();
         }
 
-        private void btnDelTierart_Click(object sender, System.EventArgs e)
+        private void btnDelTierart_Click(object sender, EventArgs e)
         {
             if (currentTierartId == 0) return;
 
@@ -392,7 +395,7 @@ namespace ZooApp
             }
         }
 
-        private void lbTierart_SelectedIndexChanged(object sender, System.EventArgs e)
+        private void lbTierart_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lbTierart.SelectedItem == null) return;
 
@@ -426,19 +429,19 @@ namespace ZooApp
         {
             txtTierName.Text = "";
             txtGewicht.Text = "";
-            dtpGeburtsdatum.Value = System.DateTime.Now;
+            dtpGeburtsdatum.Value = DateTime.Now;
             cmbTierartTiere.SelectedIndex = -1;
             cmbGehegeTiere.SelectedIndex = -1;
             currentTierId = 0;
         }
 
-        private void btnNewTier_Click(object sender, System.EventArgs e)
+        private void btnNewTier_Click(object sender, EventArgs e)
         {
             ClearTiereFields();
         }
 
         // Speichert Tier mit Validierung
-        private void btnSaveTier_Click(object sender, System.EventArgs e)
+        private void btnSaveTier_Click(object sender, EventArgs e)
         {
             if (txtTierName.Text == "" || txtGewicht.Text == "" ||
                 !decimal.TryParse(txtGewicht.Text, out decimal gewicht) ||
@@ -467,7 +470,7 @@ namespace ZooApp
             ClearTiereFields();
         }
 
-        private void btnDelTier_Click(object sender, System.EventArgs e)
+        private void btnDelTier_Click(object sender, EventArgs e)
         {
             if (currentTierId == 0) return;
 
@@ -482,7 +485,7 @@ namespace ZooApp
         }
 
         // Tier wurde ausgewählt
-        private void lbTiere_SelectedIndexChanged(object sender, System.EventArgs e)
+        private void lbTiere_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lbTiere.SelectedItem == null) return;
 
@@ -494,10 +497,10 @@ namespace ZooApp
             DataRow r = dt.Rows[0];
             txtTierName.Text = r["Name"].ToString();
             txtGewicht.Text = r["Gewicht"].ToString();
-            dtpGeburtsdatum.Value = System.Convert.ToDateTime(r["Geburtsdatum"]);
+            dtpGeburtsdatum.Value = Convert.ToDateTime(r["Geburtsdatum"]);
 
-            int tierartId = System.Convert.ToInt32(r["TierartID"]);
-            int gehegeId = System.Convert.ToInt32(r["GehegeID"]);
+            int tierartId = Convert.ToInt32(r["TierartID"]);
+            int gehegeId = Convert.ToInt32(r["GehegeID"]);
 
             foreach (ComboBoxItem it in cmbTierartTiere.Items)
                 if (it.Value == tierartId)
@@ -512,21 +515,169 @@ namespace ZooApp
 
         #region ÜBERSICHT
 
-        // Lädt komplette Tier-Übersicht
+        // Lädt komplette Tier-Übersicht mit Fehlerbehandlung
         private void LoadUebersicht()
         {
-            DataTable dt = db.Get(@"
-                SELECT t.tierID, t.Name AS Tiername, t.Gewicht,
-                    ta.TABezeichnung AS Tierart, g.GBezeichnung AS Gehege,
-                    k.Kbezeichnung AS Kontinent
-                FROM Tiere t
-                LEFT JOIN Tierart ta ON t.TierartID = ta.tierartID
-                LEFT JOIN Gehege g ON t.GehegeID = g.gID
-                LEFT JOIN Kontinent k ON g.kontinentID = k.kID
-                ORDER BY t.Name");
+            if (dgvUebersicht == null) return;
 
-            dgvUebersicht.DataSource = dt;
-            dgvUebersicht.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            try
+            {
+                // Prüfe zuerst ob Spalten existieren
+                bool hasBildpfad = CheckColumnExists("Tiere", "Bildpfad");
+                bool hasNotizen = CheckColumnExists("Tiere", "Notizen");
+
+                string sql;
+                
+                if (hasBildpfad && hasNotizen)
+                {
+                    // Erweiterte Version mit allen Spalten
+                    sql = @"
+                        SELECT 
+                            t.tierID AS 'ID',
+                            t.Name AS 'Name',
+                            ta.TABezeichnung AS 'Tierart',
+                            t.Gewicht AS 'Gewicht (kg)',
+                            DATE_FORMAT(t.Geburtsdatum, '%d.%m.%Y') AS 'Geburtsdatum',
+                            TIMESTAMPDIFF(YEAR, t.Geburtsdatum, CURDATE()) AS 'Alter',
+                            g.GBezeichnung AS 'Gehege',
+                            k.Kbezeichnung AS 'Kontinent',
+                            CASE 
+                                WHEN t.Bildpfad IS NOT NULL AND t.Bildpfad != '' THEN '🖼️ Ja'
+                                ELSE '❌ Nein'
+                            END AS 'Bild',
+                            CASE 
+                                WHEN t.Notizen IS NOT NULL AND t.Notizen != '' THEN '📝 Ja'
+                                ELSE '❌ Nein'
+                            END AS 'Notizen'
+                        FROM Tiere t
+                        LEFT JOIN Tierart ta ON t.TierartID = ta.tierartID
+                        LEFT JOIN Gehege g ON t.GehegeID = g.gID
+                        LEFT JOIN Kontinent k ON g.kontinentID = k.kID
+                        ORDER BY t.Name";
+                }
+                else
+                {
+                    // Basis-Version ohne Bild/Notizen
+                    sql = @"
+                        SELECT 
+                            t.tierID AS 'ID',
+                            t.Name AS 'Name',
+                            ta.TABezeichnung AS 'Tierart',
+                            t.Gewicht AS 'Gewicht (kg)',
+                            DATE_FORMAT(t.Geburtsdatum, '%d.%m.%Y') AS 'Geburtsdatum',
+                            TIMESTAMPDIFF(YEAR, t.Geburtsdatum, CURDATE()) AS 'Alter',
+                            g.GBezeichnung AS 'Gehege',
+                            k.Kbezeichnung AS 'Kontinent'
+                        FROM Tiere t
+                        LEFT JOIN Tierart ta ON t.TierartID = ta.tierartID
+                        LEFT JOIN Gehege g ON t.GehegeID = g.gID
+                        LEFT JOIN Kontinent k ON g.kontinentID = k.kID
+                        ORDER BY t.Name";
+                }
+
+                DataTable dt = db.Get(sql);
+                dgvUebersicht.DataSource = dt;
+                dgvUebersicht.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+                
+                // ID-Spalte schmal machen
+                if (dgvUebersicht.Columns.Contains("ID"))
+                    dgvUebersicht.Columns["ID"].Width = 50;
+                
+                // Doppelklick-Event hinzufügen (nur einmal)
+                dgvUebersicht.CellDoubleClick -= dgvUebersicht_CellDoubleClick;
+                dgvUebersicht.CellDoubleClick += dgvUebersicht_CellDoubleClick;
+                
+                string statusMsg = hasBildpfad && hasNotizen 
+                    ? $"✅ {dt.Rows.Count} Tiere - Doppelklick für Details" 
+                    : $"✅ {dt.Rows.Count} Tiere (Basis-Ansicht - DB-Update nötig für Details)";
+                
+                UpdateStatus(statusMsg);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler beim Laden der Übersicht:\n{ex.Message}\n\nBitte prüfen Sie die Datenbank-Verbindung.", 
+                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                
+                // Fallback: Basis-Query ohne spezielle Spalten
+                try
+                {
+                    DataTable dt = db.Get(@"
+                        SELECT t.tierID, t.Name AS Tiername, t.Gewicht,
+                            ta.TABezeichnung AS Tierart, g.GBezeichnung AS Gehege,
+                            k.Kbezeichnung AS Kontinent
+                        FROM Tiere t
+                        LEFT JOIN Tierart ta ON t.TierartID = ta.tierartID
+                        LEFT JOIN Gehege g ON t.GehegeID = g.gID
+                        LEFT JOIN Kontinent k ON g.kontinentID = k.kID
+                        ORDER BY t.Name");
+
+                    dgvUebersicht.DataSource = dt;
+                    dgvUebersicht.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+                    UpdateStatus("✅ Basis-Übersicht geladen");
+                }
+                catch
+                {
+                    UpdateStatus("❌ Fehler beim Laden der Übersicht");
+                }
+            }
+        }
+        
+        // Prüft ob Datenbank-Spalte existiert
+        private bool CheckColumnExists(string tableName, string columnName)
+        {
+            try
+            {
+                DataTable dt = db.Get(@"
+                    SELECT COUNT(*) as cnt 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_SCHEMA = DATABASE() 
+                    AND TABLE_NAME = @table 
+                    AND COLUMN_NAME = @column",
+                    ("@table", tableName),
+                    ("@column", columnName));
+                
+                return dt.Rows.Count > 0 && Convert.ToInt32(dt.Rows[0]["cnt"]) > 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        
+        // Event: Doppelklick auf Tier öffnet Detail-Fenster
+        private void dgvUebersicht_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+            
+            try
+            {
+                // Prüfe ob Bild/Notizen-Spalten existieren
+                bool detailsAvailable = CheckColumnExists("Tiere", "Bildpfad");
+                
+                if (!detailsAvailable)
+                {
+                    MessageBox.Show(
+                        "⚠️ Detail-Ansicht nicht verfügbar!\n\n" +
+                        "Bitte führen Sie zuerst das Datenbank-Update aus:\n" +
+                        "database_update_bilder.sql in phpMyAdmin ausführen.",
+                        "Information", 
+                        MessageBoxButtons.OK, 
+                        MessageBoxIcon.Information);
+                    return;
+                }
+                
+                int tierID = Convert.ToInt32(dgvUebersicht.Rows[e.RowIndex].Cells["ID"].Value);
+                TierDetailForm detailForm = new TierDetailForm(tierID);
+                detailForm.ShowDialog();
+                
+                // Nach dem Schließen Übersicht neu laden
+                LoadUebersicht();
+                LoadTiere();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler beim Öffnen: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         // Erlaubt direktes Bearbeiten von Name und Gewicht
@@ -535,17 +686,17 @@ namespace ZooApp
             if (e.RowIndex < 0) return;
 
             var row = dgvUebersicht.Rows[e.RowIndex];
-            int id = System.Convert.ToInt32(row.Cells["tierID"].Value);
+            int id = Convert.ToInt32(row.Cells["ID"].Value);
             string col = dgvUebersicht.Columns[e.ColumnIndex].Name;
             var value = row.Cells[e.ColumnIndex].Value;
 
             switch (col)
             {
-                case "Tiername":
+                case "Name":
                     db.Execute("UPDATE Tiere SET Name=@v WHERE tierID=@id", ("@v", value), ("@id", id));
                     break;
 
-                case "Gewicht":
+                case "Gewicht (kg)":
                     if (!decimal.TryParse(value.ToString(), out _))
                     {
                         MessageBox.Show("Ungültiges Gewicht.");
@@ -580,12 +731,12 @@ namespace ZooApp
             currentFutterId = 0;
         }
 
-        private void btnFutterNeu_Click(object sender, System.EventArgs e)
+        private void btnFutterNeu_Click(object sender, EventArgs e)
         {
             ClearFutterFields();
         }
 
-        private void btnLadeFutter_Click(object sender, System.EventArgs e)
+        private void btnLadeFutter_Click(object sender, EventArgs e)
         {
             LoadFutterListe();
             UpdateStatus("✅ Futtersorten neu geladen");
@@ -607,7 +758,7 @@ namespace ZooApp
         }
 
         // Speichert Futtersorte
-        private void btnFutterSpeichern_Click(object sender, System.EventArgs e)
+        private void btnFutterSpeichern_Click(object sender, EventArgs e)
         {
             if (txtFutterBezeichnung.Text == "" || txtFutterEinheit.Text == "")
             {
@@ -652,7 +803,7 @@ namespace ZooApp
             }
         }
 
-        private void btnFutterLöschen_Click(object sender, System.EventArgs e)
+        private void btnFutterLöschen_Click(object sender, EventArgs e)
         {
             if (currentFutterId == 0) return;
 
@@ -950,7 +1101,7 @@ namespace ZooApp
             }
         }
 
-        private void btnLadeBestellungen_Click(object sender, System.EventArgs e)
+        private void btnLadeBestellungen_Click(object sender, EventArgs e)
         {
             LoadBestellungen();
         }

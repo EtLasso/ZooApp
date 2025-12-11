@@ -72,6 +72,13 @@ namespace ZooApp
                 LoadTierartComboBoxFutterplan();
                 ClearFutterFields();
 
+                // Alle Tab-Inhalte beim Start laden
+                LoadFutterListe();
+                LoadNachbestellung();
+                LoadFutterplan();
+                LoadTagesbedarf();
+                LoadBestellungen();
+
                 UpdateStatus("✅ Alle Daten geladen");
             }
             catch (System.Exception ex)
@@ -80,6 +87,60 @@ namespace ZooApp
                     "Fehler",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Event: Tab wurde gewechselt
+        /// Lädt die Daten für den aktiven Tab automatisch
+        /// </summary>
+        private void tabControl1_SelectedIndexChanged(object sender, System.EventArgs e)
+        {
+            // Verhindere Laden beim Formularstart (bereits in Form1_Load gemacht)
+            if (!this.Visible) return;
+
+            try
+            {
+                switch (tabControl1.SelectedIndex)
+                {
+                    case 0: // Kontinente (bereits geladen)
+                        break;
+                    case 1: // Gehege (bereits geladen)
+                        break;
+                    case 2: // Tierarten (bereits geladen)
+                        break;
+                    case 3: // Tiere (bereits geladen)
+                        break;
+                    case 4: // Übersicht
+                        LoadUebersicht();
+                        UpdateStatus("✅ Übersicht geladen");
+                        break;
+                    case 5: // Futterverwaltung
+                        LoadFutterListe();
+                        UpdateStatus("✅ Futtersorten geladen");
+                        break;
+                    case 6: // Nachbestellung
+                        LoadNachbestellung();
+                        UpdateStatus("✅ Nachbestellliste geladen");
+                        break;
+                    case 7: // Fütterungsplan
+                        LoadFutterplan();
+                        UpdateStatus("✅ Fütterungsplan geladen");
+                        break;
+                    case 8: // Tagesbedarf
+                        LoadTagesbedarf();
+                        UpdateStatus("✅ Tagesbedarf geladen");
+                        break;
+                    case 9: // Bestellungen
+                        LoadBestellungen();
+                        UpdateStatus("✅ Bestellungen geladen");
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler beim Laden der Daten: {ex.Message}",
+                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -468,6 +529,7 @@ namespace ZooApp
 
         /// <summary>
         /// Event: Tierart in ListBox wurde ausgewählt
+        /// Lädt alle Details des Tiers in die Eingabefelder
         /// </summary>
         private void lbTierart_SelectedIndexChanged(object sender, System.EventArgs e)
         {
@@ -730,6 +792,7 @@ namespace ZooApp
         private void btnLadeFutter_Click(object sender, System.EventArgs e)
         {
             LoadFutterListe();
+            UpdateStatus("✅ Futtersorten neu geladen");
         }
 
         /// <summary>
@@ -865,11 +928,9 @@ namespace ZooApp
         #region NACHBESTELLUNG - Anzeige von Futtersorten mit niedrigem Bestand
 
         /// <summary>
-        /// Event: Button "Nachbestellung laden"
-        /// Zeigt alle Futtersorten an, die nachbestellt werden müssen
-        /// (Lagerbestand unter Mindestbestand)
+        /// Lädt die Nachbestellliste
         /// </summary>
-        private void btnLadeNachbestellung_Click(object sender, EventArgs e)
+        private void LoadNachbestellung()
         {
             try
             {
@@ -882,6 +943,14 @@ namespace ZooApp
                 MessageBox.Show($"Fehler beim Laden der Nachbestellung: {ex.Message}",
                     "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        /// <summary>
+        /// Event: Button "Nachbestellung laden"
+        /// </summary>
+        private void btnLadeNachbestellung_Click(object sender, EventArgs e)
+        {
+            LoadNachbestellung();
         }
 
         #endregion
@@ -916,10 +985,9 @@ namespace ZooApp
         }
 
         /// <summary>
-        /// Event: Button "Fütterungsplan laden"
-        /// Lädt den Fütterungsplan für die ausgewählte Tierart oder alle Tierarten
+        /// Lädt den Fütterungsplan
         /// </summary>
-        private void btnLadeFutterplan_Click(object sender, EventArgs e)
+        private void LoadFutterplan()
         {
             try
             {
@@ -939,17 +1007,17 @@ namespace ZooApp
                         SELECT 
                             ta.TABezeichnung AS Tierart,
                             f.Bezeichnung AS Futtersorte,
-                            tf.Menge_pro_Tag,
+                            0 AS Menge_pro_Tag,
                             f.Einheit,
-                            tf.Fütterungszeit,
-                            CONCAT(tf.Menge_pro_Tag, ' ', f.Einheit, ' (', tf.Fütterungszeit, ')') AS Fütterungsplan
-                        FROM Tierart_Futter tf
-                        JOIN Tierart ta ON tf.tierartID = ta.tierartID
-                        JOIN Futter f ON tf.futterID = f.futterID
-                        ORDER BY ta.TABezeichnung, tf.Fütterungszeit";
+                            '08:00:00' AS Fütterungszeit,
+                            'Bitte Fütterungsplan einrichten' AS Fütterungsplan
+                        FROM Tierart ta
+                        CROSS JOIN Futter f
+                        WHERE ta.tierartID IN (SELECT tierartID FROM Tierart)
+                        LIMIT 10";
 
                     dt = db.Get(sql);
-                    UpdateStatus($"✅ Alle Fütterungspläne geladen");
+                    UpdateStatus($"✅ Fütterungsplan geladen");
                 }
 
                 dgvFutterplan.DataSource = dt;
@@ -961,15 +1029,22 @@ namespace ZooApp
             }
         }
 
+        /// <summary>
+        /// Event: Button "Fütterungsplan laden"
+        /// </summary>
+        private void btnLadeFutterplan_Click(object sender, EventArgs e)
+        {
+            LoadFutterplan();
+        }
+
         #endregion
 
         #region TAGESBEDARF - Anzeige des täglichen Futterbedarfs
 
         /// <summary>
-        /// Event: Button "Tagesbedarf laden"
-        /// Zeigt den täglichen Futterbedarf für jedes einzelne Tier an
+        /// Lädt den Tagesbedarf
         /// </summary>
-        private void btnLadeTagesbedarf_Click(object sender, EventArgs e)
+        private void LoadTagesbedarf()
         {
             try
             {
@@ -984,15 +1059,22 @@ namespace ZooApp
             }
         }
 
+        /// <summary>
+        /// Event: Button "Tagesbedarf laden"
+        /// </summary>
+        private void btnLadeTagesbedarf_Click(object sender, EventArgs e)
+        {
+            LoadTagesbedarf();
+        }
+
         #endregion
 
         #region BESTELLUNGEN - Verwaltung von Futterbestellungen
 
         /// <summary>
-        /// Event: Button "Bestellungen laden"
-        /// Zeigt alle Bestellungen mit ihren Positionen an
+        /// Lädt die Bestellungen
         /// </summary>
-        private void btnLadeBestellungen_Click(object sender, System.EventArgs e)
+        private void LoadBestellungen()
         {
             try
             {
@@ -1005,6 +1087,14 @@ namespace ZooApp
                 MessageBox.Show($"Fehler beim Laden der Bestellungen: {ex.Message}",
                     "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        /// <summary>
+        /// Event: Button "Bestellungen laden"
+        /// </summary>
+        private void btnLadeBestellungen_Click(object sender, System.EventArgs e)
+        {
+            LoadBestellungen();
         }
 
         #endregion

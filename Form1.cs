@@ -12,7 +12,7 @@ namespace ZooApp
 
         private readonly DB db = new DB();
         private readonly ZooDB zooDb = new ZooDB();
-        
+
         // Aktuell ausgewählte IDs
         private int currentKontinentId = 0;
         private int currentGehegeId = 0;
@@ -27,7 +27,7 @@ namespace ZooApp
         public Form1()
         {
             InitializeComponent();
-            
+
             // Button zum Erstellen von Futterplänen hinzufügen
             AddFutterplanButton();
         }
@@ -48,10 +48,10 @@ namespace ZooApp
                 Font = new Font("Segoe UI", 10F, FontStyle.Bold),
                 Cursor = Cursors.Hand
             };
-            
+
             btnFutterplanNeu.FlatAppearance.BorderSize = 0;
             btnFutterplanNeu.Click += btnFutterplanNeu_Click;
-            
+
             // Button zum Fütterungsplan-Tab hinzufügen (Null-Check)
             if (tabControl1?.TabPages != null && tabControl1.TabPages.Count > 7)
             {
@@ -86,6 +86,9 @@ namespace ZooApp
                 LoadUebersicht();
                 LoadTierartComboBoxFutterplan();
                 ClearFutterFields();
+
+                // Doppelklick-Event für Tier-Liste registrieren
+                lbTiere.DoubleClick += lbTiere_DoubleClick;
 
                 // Alle Tabs initial laden
                 LoadFutterListe();
@@ -130,7 +133,7 @@ namespace ZooApp
         private void UpdateStatus(string msg)
         {
             if (lblStatus != null)
-                lblStatus.Text = msg;
+                lblStatus.Text = "Status: " + msg;
         }
 
         #endregion
@@ -511,176 +514,133 @@ namespace ZooApp
                     cmbGehegeTiere.SelectedItem = it;
         }
 
+        // Doppelklick auf Tier öffnet Detail-Fenster
+        private void lbTiere_DoubleClick(object sender, EventArgs e)
+        {
+            // Prüfen ob ein Tier ausgewählt ist
+            if (lbTiere.SelectedItem == null)
+            {
+                MessageBox.Show("Bitte wähle zuerst ein Tier aus.", "Hinweis", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            try
+            {
+                // TierID aus dem ausgewählten Eintrag extrahieren
+                int tierID = int.Parse(lbTiere.SelectedItem.ToString().Split('-')[0].Trim());
+                
+                // Detail-Fenster öffnen
+                TierDetailForm detailForm = new TierDetailForm(tierID);
+                detailForm.ShowDialog();
+                
+                // Nach dem Schließen die Listen neu laden
+                LoadTiere();
+                LoadUebersicht();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler beim Öffnen des Detail-Fensters:\n{ex.Message}", 
+                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         #endregion
 
         #region ÜBERSICHT
 
-        // Lädt komplette Tier-Übersicht mit Fehlerbehandlung
+        // Lädt komplette Tier-Übersicht
         private void LoadUebersicht()
         {
             if (dgvUebersicht == null) return;
 
             try
             {
-                // Prüfe zuerst ob Spalten existieren
-                bool hasBildpfad = CheckColumnExists("Tiere", "Bildpfad");
-                bool hasNotizen = CheckColumnExists("Tiere", "Notizen");
-
-                string sql;
-                
-                if (hasBildpfad && hasNotizen)
-                {
-                    // Erweiterte Version mit allen Spalten
-                    sql = @"
-                        SELECT 
-                            t.tierID AS 'ID',
-                            t.Name AS 'Name',
-                            ta.TABezeichnung AS 'Tierart',
-                            t.Gewicht AS 'Gewicht (kg)',
-                            DATE_FORMAT(t.Geburtsdatum, '%d.%m.%Y') AS 'Geburtsdatum',
-                            TIMESTAMPDIFF(YEAR, t.Geburtsdatum, CURDATE()) AS 'Alter',
-                            g.GBezeichnung AS 'Gehege',
-                            k.Kbezeichnung AS 'Kontinent',
-                            CASE 
-                                WHEN t.Bildpfad IS NOT NULL AND t.Bildpfad != '' THEN '🖼️ Ja'
-                                ELSE '❌ Nein'
-                            END AS 'Bild',
-                            CASE 
-                                WHEN t.Notizen IS NOT NULL AND t.Notizen != '' THEN '📝 Ja'
-                                ELSE '❌ Nein'
-                            END AS 'Notizen'
-                        FROM Tiere t
-                        LEFT JOIN Tierart ta ON t.TierartID = ta.tierartID
-                        LEFT JOIN Gehege g ON t.GehegeID = g.gID
-                        LEFT JOIN Kontinent k ON g.kontinentID = k.kID
-                        ORDER BY t.Name";
-                }
-                else
-                {
-                    // Basis-Version ohne Bild/Notizen
-                    sql = @"
-                        SELECT 
-                            t.tierID AS 'ID',
-                            t.Name AS 'Name',
-                            ta.TABezeichnung AS 'Tierart',
-                            t.Gewicht AS 'Gewicht (kg)',
-                            DATE_FORMAT(t.Geburtsdatum, '%d.%m.%Y') AS 'Geburtsdatum',
-                            TIMESTAMPDIFF(YEAR, t.Geburtsdatum, CURDATE()) AS 'Alter',
-                            g.GBezeichnung AS 'Gehege',
-                            k.Kbezeichnung AS 'Kontinent'
-                        FROM Tiere t
-                        LEFT JOIN Tierart ta ON t.TierartID = ta.tierartID
-                        LEFT JOIN Gehege g ON t.GehegeID = g.gID
-                        LEFT JOIN Kontinent k ON g.kontinentID = k.kID
-                        ORDER BY t.Name";
-                }
+                string sql = @"
+                    SELECT 
+                        t.tierID AS 'ID',
+                        t.Name AS 'Name',
+                        ta.TABezeichnung AS 'Tierart',
+                        t.Gewicht AS 'Gewicht (kg)',
+                        DATE_FORMAT(t.Geburtsdatum, '%d.%m.%Y') AS 'Geburtsdatum',
+                        TIMESTAMPDIFF(YEAR, t.Geburtsdatum, CURDATE()) AS 'Alter',
+                        g.GBezeichnung AS 'Gehege',
+                        k.Kbezeichnung AS 'Kontinent',
+                        CASE 
+                            WHEN t.Bildpfad IS NOT NULL AND t.Bildpfad != '' THEN '🖼️ Ja'
+                            ELSE '❌ Nein'
+                        END AS 'Bild',
+                        CASE 
+                            WHEN t.Notizen IS NOT NULL AND t.Notizen != '' THEN '📝 Ja'
+                            ELSE '❌ Nein'
+                        END AS 'Notizen'
+                    FROM tiere t
+                    LEFT JOIN Tierart ta ON t.TierartID = ta.tierartID
+                    LEFT JOIN Gehege g ON t.GehegeID = g.gID
+                    LEFT JOIN Kontinent k ON g.kontinentID = k.kID
+                    ORDER BY t.Name";
 
                 DataTable dt = db.Get(sql);
                 dgvUebersicht.DataSource = dt;
                 dgvUebersicht.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-                
-                // ID-Spalte schmal machen
-                if (dgvUebersicht.Columns.Contains("ID"))
-                    dgvUebersicht.Columns["ID"].Width = 50;
-                
-                // Doppelklick-Event hinzufügen (nur einmal)
+
+                Application.DoEvents();
+
+                if (dgvUebersicht.Columns != null && dgvUebersicht.Columns.Count > 0)
+                {
+                    if (dgvUebersicht.Columns.Contains("ID"))
+                    {
+                        dgvUebersicht.Columns["ID"].Width = 50;
+                        dgvUebersicht.Columns["ID"].ReadOnly = true;
+                    }
+                }
+
                 dgvUebersicht.CellDoubleClick -= dgvUebersicht_CellDoubleClick;
                 dgvUebersicht.CellDoubleClick += dgvUebersicht_CellDoubleClick;
-                
-                string statusMsg = hasBildpfad && hasNotizen 
-                    ? $"✅ {dt.Rows.Count} Tiere - Doppelklick für Details" 
-                    : $"✅ {dt.Rows.Count} Tiere (Basis-Ansicht - DB-Update nötig für Details)";
-                
-                UpdateStatus(statusMsg);
+
+                UpdateStatus($"✅ {dt.Rows.Count} Tiere - Doppelklick für Details");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fehler beim Laden der Übersicht:\n{ex.Message}\n\nBitte prüfen Sie die Datenbank-Verbindung.", 
-                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                
-                // Fallback: Basis-Query ohne spezielle Spalten
-                try
-                {
-                    DataTable dt = db.Get(@"
-                        SELECT t.tierID, t.Name AS Tiername, t.Gewicht,
-                            ta.TABezeichnung AS Tierart, g.GBezeichnung AS Gehege,
-                            k.Kbezeichnung AS Kontinent
-                        FROM Tiere t
-                        LEFT JOIN Tierart ta ON t.TierartID = ta.tierartID
-                        LEFT JOIN Gehege g ON t.GehegeID = g.gID
-                        LEFT JOIN Kontinent k ON g.kontinentID = k.kID
-                        ORDER BY t.Name");
+                MessageBox.Show($"Fehler:\n{ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UpdateStatus("❌ Fehler beim Laden");
+            }
+        }
 
-                    dgvUebersicht.DataSource = dt;
-                    dgvUebersicht.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-                    UpdateStatus("✅ Basis-Übersicht geladen");
-                }
-                catch
-                {
-                    UpdateStatus("❌ Fehler beim Laden der Übersicht");
-                }
-            }
-        }
-        
-        // Prüft ob Datenbank-Spalte existiert
-        private bool CheckColumnExists(string tableName, string columnName)
-        {
-            try
-            {
-                DataTable dt = db.Get(@"
-                    SELECT COUNT(*) as cnt 
-                    FROM INFORMATION_SCHEMA.COLUMNS 
-                    WHERE TABLE_SCHEMA = DATABASE() 
-                    AND TABLE_NAME = @table 
-                    AND COLUMN_NAME = @column",
-                    ("@table", tableName),
-                    ("@column", columnName));
-                
-                return dt.Rows.Count > 0 && Convert.ToInt32(dt.Rows[0]["cnt"]) > 0;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-        
-        // Event: Doppelklick auf Tier öffnet Detail-Fenster
+        // Doppelklick öffnet Detail-Fenster
         private void dgvUebersicht_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
-            
+
             try
             {
-                // Prüfe ob Bild/Notizen-Spalten existieren
-                bool detailsAvailable = CheckColumnExists("Tiere", "Bildpfad");
-                
-                if (!detailsAvailable)
+                if (dgvUebersicht.Columns == null || !dgvUebersicht.Columns.Contains("ID"))
                 {
-                    MessageBox.Show(
-                        "⚠️ Detail-Ansicht nicht verfügbar!\n\n" +
-                        "Bitte führen Sie zuerst das Datenbank-Update aus:\n" +
-                        "database_update_bilder.sql in phpMyAdmin ausführen.",
-                        "Information", 
-                        MessageBoxButtons.OK, 
-                        MessageBoxIcon.Information);
+                    MessageBox.Show("ID-Spalte nicht gefunden!", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
-                
-                int tierID = Convert.ToInt32(dgvUebersicht.Rows[e.RowIndex].Cells["ID"].Value);
+
+                var cellValue = dgvUebersicht.Rows[e.RowIndex].Cells["ID"].Value;
+                if (cellValue == null || cellValue == DBNull.Value)
+                {
+                    MessageBox.Show("Keine Tier-ID gefunden!", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                int tierID = Convert.ToInt32(cellValue);
                 TierDetailForm detailForm = new TierDetailForm(tierID);
                 detailForm.ShowDialog();
-                
-                // Nach dem Schließen Übersicht neu laden
+
                 LoadUebersicht();
                 LoadTiere();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fehler beim Öffnen: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Fehler:\n{ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        // Erlaubt direktes Bearbeiten von Name und Gewicht
+        // Direktes Bearbeiten von Name und Gewicht
         private void dgvUebersicht_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
@@ -934,7 +894,6 @@ namespace ZooApp
         // Öffnet Dialog zum Erstellen eines Fütterungsplans
         private void btnFutterplanNeu_Click(object sender, EventArgs e)
         {
-            // Dialog erstellen
             Form dialog = new Form
             {
                 Text = "🍽️ Fütterungsplan erstellen",
@@ -946,20 +905,17 @@ namespace ZooApp
                 BackColor = Color.White
             };
 
-            // Labels
             Label lblTierart = new Label { Text = "Tierart:", Left = 20, Top = 20, Width = 100 };
             Label lblFutter = new Label { Text = "Futter:", Left = 20, Top = 60, Width = 100 };
             Label lblMenge = new Label { Text = "Menge pro Tag:", Left = 20, Top = 100, Width = 100 };
             Label lblZeit = new Label { Text = "Fütterungszeit:", Left = 20, Top = 140, Width = 100 };
             Label lblEinheit = new Label { Text = "(kg)", Left = 350, Top = 100, Width = 50 };
 
-            // ComboBoxen und Controls
             ComboBox cmbTierart = new ComboBox { Left = 130, Top = 17, Width = 250, DropDownStyle = ComboBoxStyle.DropDownList };
             ComboBox cmbFutter = new ComboBox { Left = 130, Top = 57, Width = 250, DropDownStyle = ComboBoxStyle.DropDownList };
             NumericUpDown numMenge = new NumericUpDown { Left = 130, Top = 97, Width = 210, DecimalPlaces = 2, Minimum = 0.01m, Maximum = 1000, Value = 5, Increment = 0.5m };
             MaskedTextBox mtxtZeit = new MaskedTextBox { Left = 130, Top = 137, Width = 100, Mask = "00:00", Text = "08:00" };
 
-            // Buttons
             Button btnSpeichern = new Button { Text = "💾 Speichern", Left = 150, Top = 220, Width = 130, Height = 45 };
             btnSpeichern.BackColor = Color.FromArgb(46, 204, 113);
             btnSpeichern.ForeColor = Color.White;
@@ -974,7 +930,6 @@ namespace ZooApp
             btnAbbrechen.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btnAbbrechen.Cursor = Cursors.Hand;
 
-            // Daten laden
             DataTable dtTierarten = db.Get("SELECT tierartID, TABezeichnung FROM Tierart ORDER BY TABezeichnung");
             DataTable dtFutter = db.Get("SELECT futterID, Bezeichnung, Einheit FROM Futter ORDER BY Bezeichnung");
 
@@ -1000,7 +955,6 @@ namespace ZooApp
             cmbFutter.DisplayMember = "Text";
             cmbFutter.ValueMember = "Value";
 
-            // Event Handlers
             btnSpeichern.Click += (s, ev) =>
             {
                 if (cmbTierart.SelectedIndex == -1 || cmbFutter.SelectedIndex == -1)
@@ -1016,14 +970,12 @@ namespace ZooApp
 
                 try
                 {
-                    // Prüfen ob schon vorhanden
                     DataTable check = db.Get(@"SELECT * FROM Tierart_Futter 
                                               WHERE tierartID=@tid AND futterID=@fid AND Fütterungszeit=@zeit",
                         ("@tid", tierartId), ("@fid", futterId), ("@zeit", zeit));
 
                     if (check.Rows.Count > 0)
                     {
-                        // Update
                         db.Execute(@"UPDATE Tierart_Futter SET Menge_pro_Tag=@menge 
                                    WHERE tierartID=@tid AND futterID=@fid AND Fütterungszeit=@zeit",
                             ("@menge", menge), ("@tid", tierartId), ("@fid", futterId), ("@zeit", zeit));
@@ -1031,7 +983,6 @@ namespace ZooApp
                     }
                     else
                     {
-                        // Insert
                         db.Execute(@"INSERT INTO Tierart_Futter (tierartID, futterID, Menge_pro_Tag, Fütterungszeit) 
                                    VALUES (@tid, @fid, @menge, @zeit)",
                             ("@tid", tierartId), ("@fid", futterId), ("@menge", menge), ("@zeit", zeit));
@@ -1050,7 +1001,6 @@ namespace ZooApp
 
             btnAbbrechen.Click += (s, ev) => dialog.Close();
 
-            // Controls hinzufügen
             dialog.Controls.AddRange(new Control[] {
                 lblTierart, lblFutter, lblMenge, lblZeit, lblEinheit,
                 cmbTierart, cmbFutter, numMenge, mtxtZeit,
@@ -1110,7 +1060,6 @@ namespace ZooApp
 
         #region Hilfsklasse
 
-        // Für ComboBox mit ID und Text
         public class ComboBoxItem
         {
             public int Value { get; set; }

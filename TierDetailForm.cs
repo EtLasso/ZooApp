@@ -159,7 +159,7 @@ namespace ZooApp
             // Info-Label
             Label lblInfo = new Label
             {
-                Text = "ℹ️ Alle Felder rechts sind editierbar",
+                Text = "ℹ️ hier kann noch was sinnvolles rein!",
                 Left = 20,
                 Top = 495,
                 Width = 360,

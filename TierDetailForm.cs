@@ -27,6 +27,7 @@ namespace ZooApp
         private TextBox txtNotizen;
         private Button btnBildLaden;
         private Button btnBildLoeschen;
+        private Button btnFutterplan; // Neu: Button für Fütterungsplan
         private Button btnSpeichern;
         private Button btnSchliessen;
 
@@ -171,6 +172,24 @@ namespace ZooApp
                 BackColor = Color.FromArgb(230, 240, 250)
             };
             leftPanel.Controls.Add(lblInfo);
+
+            // Fütterungsplan-Button
+            btnFutterplan = new Button
+            {
+                Text = "🍽️ Fütterungsplan",
+                Left = 20,
+                Top = 565,
+                Width = 360,
+                Height = 45,
+                BackColor = Color.FromArgb(46, 204, 113),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnFutterplan.FlatAppearance.BorderSize = 0;
+            btnFutterplan.Click += btnFutterplan_Click;
+            leftPanel.Controls.Add(btnFutterplan);
 
             this.Controls.Add(leftPanel);
 
@@ -673,6 +692,45 @@ namespace ZooApp
             catch (Exception ex)
             {
                 MessageBox.Show($"❌ Fehler beim Speichern:\n{ex.Message}", "Fehler", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Event: Fütterungsplan öffnen
+        private void btnFutterplan_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Tierart-ID ermitteln
+                int tierartID = 0;
+                if (cmbTierart.SelectedItem != null)
+                {
+                    tierartID = ((ComboBoxItem)cmbTierart.SelectedItem).Value;
+                }
+                else
+                {
+                    // Falls ComboBox noch nicht geladen, aus DB holen
+                    DataTable dt = db.Get("SELECT TierartID FROM Tiere WHERE tierID = @id", ("@id", tierID));
+                    if (dt.Rows.Count > 0)
+                    {
+                        tierartID = Convert.ToInt32(dt.Rows[0]["TierartID"]);
+                    }
+                }
+
+                if (tierartID == 0)
+                {
+                    MessageBox.Show("⚠️ Tierart konnte nicht ermittelt werden!", "Fehler", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Fütterungsplan-Fenster öffnen
+                TierFutterplanForm futterplanForm = new TierFutterplanForm(tierID, tierartID);
+                futterplanForm.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"❌ Fehler beim Öffnen des Fütterungsplans:\n{ex.Message}", "Fehler", 
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }

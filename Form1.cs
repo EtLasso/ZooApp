@@ -867,12 +867,12 @@ namespace ZooApp
                     // Alle Fütterungspläne laden
                     string sql = @"
                         SELECT ta.TABezeichnung AS Tierart, f.Bezeichnung AS Futtersorte,
-                            tf.Menge_pro_Tag, f.Einheit, tf.Fütterungszeit,
-                            CONCAT(tf.Menge_pro_Tag, ' ', f.Einheit, ' um ', tf.Fütterungszeit) AS Fütterungsplan
+                            tf.Menge_pro_Tag, f.Einheit, tf.Fuetterungszeit,
+                            CONCAT(tf.Menge_pro_Tag, ' ', f.Einheit, ' um ', tf.Fuetterungszeit) AS Fütterungsplan
                         FROM Tierart_Futter tf
                         JOIN Tierart ta ON tf.tierartID = ta.tierartID
                         JOIN Futter f ON tf.futterID = f.futterID
-                        ORDER BY ta.TABezeichnung, tf.Fütterungszeit";
+                        ORDER BY ta.TABezeichnung, tf.Fuetterungszeit";
 
                     dt = db.Get(sql);
                     UpdateStatus($"✅ Fütterungsplan geladen ({dt.Rows.Count} Einträge)");

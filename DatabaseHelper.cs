@@ -42,13 +42,13 @@ namespace ZooApp
         {
             string sql = @"
                 SELECT ta.TABezeichnung AS Tierart, f.Bezeichnung AS Futtersorte,
-                    tf.Menge_pro_Tag, f.Einheit, tf.Fütterungszeit,
-                    CONCAT(tf.Menge_pro_Tag, ' ', f.Einheit, ' (', tf.Fütterungszeit, ')') AS Fütterungsplan
+                    tf.Menge_pro_Tag, f.Einheit, tf.Fuetterungszeit,
+                    CONCAT(tf.Menge_pro_Tag, ' ', f.Einheit, ' (', tf.Fuetterungszeit, ')') AS Fütterungsplan
                 FROM Tierart_Futter tf
                 JOIN Tierart ta ON tf.tierartID = ta.tierartID
                 JOIN Futter f ON tf.futterID = f.futterID
                 WHERE ta.tierartID = @tierartID
-                ORDER BY tf.Fütterungszeit";
+                ORDER BY tf.Fuetterungszeit";
 
             return Get(sql, ("@tierartID", tierartID));
         }
@@ -63,14 +63,14 @@ namespace ZooApp
             string sql = @"
                 SELECT t.tierID, t.Name AS Tiername, ta.TABezeichnung AS Tierart,
                     g.GBezeichnung AS Gehege, f.Bezeichnung AS Futtersorte,
-                    tf.Menge_pro_Tag AS Tagesmenge, f.Einheit, tf.Fütterungszeit,
-                    CONCAT(tf.Menge_pro_Tag, ' ', f.Einheit, ' (', tf.Fütterungszeit, ')') AS Fütterung
+                    tf.Menge_pro_Tag AS Tagesmenge, f.Einheit, tf.Fuetterungszeit,
+                    CONCAT(tf.Menge_pro_Tag, ' ', f.Einheit, ' (', tf.Fuetterungszeit, ')') AS Fütterung
                 FROM Tiere t
                 JOIN Tierart ta ON t.TierartID = ta.tierartID
                 JOIN Tierart_Futter tf ON ta.tierartID = tf.tierartID
                 JOIN Futter f ON tf.futterID = f.futterID
                 JOIN Gehege g ON t.GehegeID = g.gID
-                ORDER BY t.Name, tf.Fütterungszeit";
+                ORDER BY t.Name, tf.Fuetterungszeit";
 
             return Get(sql);
         }

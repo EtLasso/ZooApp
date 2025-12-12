@@ -1,13 +1,20 @@
 using System;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace ZooApp
 {
-    // Formular zum Anzeigen und Bearbeiten des Fütterungsplans für ein Tier
+    /// <summary>
+    /// Modernes, responsives Formular zum Anzeigen und Bearbeiten des Fütterungsplans.
+    /// Passt sich automatisch an Fenstergröße an.
+    /// </summary>
     public class TierFutterplanForm : Form
     {
+        #region Private Felder
+        
         private readonly DB db = new DB();
         private readonly int tierID;
         private readonly int tierartID;
@@ -18,31 +25,140 @@ namespace ZooApp
         private Button btnLoeschen;
         private Button btnSchliessen;
         private Label lblTierInfo;
+        private Panel cardPanel;
+        private Panel buttonPanel;
+        
+        #endregion
+
+        #region Konstruktor
 
         public TierFutterplanForm(int tierID, int tierartID)
         {
             this.tierID = tierID;
             this.tierartID = tierartID;
+            
             InitializeControls();
             LoadFutterplan();
         }
+        
+        #endregion
 
-        // Initialisiert alle Controls
+        #region UI-Initialisierung
+
+        /// <summary>
+        /// Initialisiert alle Controls mit responsivem Design
+        /// </summary>
         private void InitializeControls()
         {
             // Formular-Einstellungen
             this.Text = "🍽️ Fütterungsplan";
-            this.Size = new Size(900, 600);
+            this.Size = new Size(950, 650);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.Sizable;
-            this.BackColor = Color.FromArgb(245, 245, 245);
+            this.MinimumSize = new Size(800, 600);
+            this.BackColor = Color.FromArgb(236, 240, 241);
+            
+            // Resize-Event für dynamische Anpassung
+            this.Resize += (s, e) => AdjustLayout();
 
-            // Header-Panel
-            Panel headerPanel = new Panel
+            // Header-Panel mit Gradient
+            Panel headerPanel = CreateHeaderPanel();
+            this.Controls.Add(headerPanel);
+
+            // Card-Panel für DataGridView (RESPONSIVE)
+            cardPanel = new Panel
+            {
+                Left = 20,
+                Top = 100,
+                Width = this.ClientSize.Width - 40,
+                Height = this.ClientSize.Height - 180,
+                BackColor = Color.White,
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+            };
+            cardPanel.Paint += (s, e) =>
+            {
+                using (Pen pen = new Pen(Color.FromArgb(189, 195, 199), 1))
+                {
+                    e.Graphics.DrawRectangle(pen, 0, 0, cardPanel.Width - 1, cardPanel.Height - 1);
+                }
+            };
+            
+            // DataGridView (RESPONSIVE)
+            dgvFutterplan = new DataGridView
+            {
+                Left = 15,
+                Top = 15,
+                Width = cardPanel.Width - 30,
+                Height = cardPanel.Height - 30,
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                ReadOnly = true,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                MultiSelect = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                RowHeadersVisible = false,
+                EnableHeadersVisualStyles = false,
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+            };
+            
+            // Header-Styling
+            dgvFutterplan.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(46, 204, 113);
+            dgvFutterplan.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+            dgvFutterplan.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            dgvFutterplan.ColumnHeadersDefaultCellStyle.Padding = new Padding(5);
+            dgvFutterplan.ColumnHeadersHeight = 40;
+            
+            // Zellen-Styling
+            dgvFutterplan.DefaultCellStyle.Font = new Font("Segoe UI", 10F);
+            dgvFutterplan.DefaultCellStyle.Padding = new Padding(5);
+            dgvFutterplan.RowTemplate.Height = 35;
+            dgvFutterplan.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(245, 245, 245);
+            
+            // Selection-Styling (HELLGRAU STATT BLAU!)
+            dgvFutterplan.DefaultCellStyle.SelectionBackColor = Color.FromArgb(189, 195, 199);
+            dgvFutterplan.DefaultCellStyle.SelectionForeColor = Color.FromArgb(44, 62, 80);
+            
+            cardPanel.Controls.Add(dgvFutterplan);
+            this.Controls.Add(cardPanel);
+
+            // Button-Panel (RESPONSIVE)
+            buttonPanel = new Panel
+            {
+                Left = 20,
+                Top = this.ClientSize.Height - 70,
+                Width = this.ClientSize.Width - 40,
+                Height = 50,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+            };
+            
+            CreateButtons();
+            this.Controls.Add(buttonPanel);
+        }
+
+        /// <summary>
+        /// Erstellt Header-Panel mit Gradient
+        /// </summary>
+        private Panel CreateHeaderPanel()
+        {
+            Panel panel = new Panel
             {
                 Dock = DockStyle.Top,
                 Height = 80,
                 BackColor = Color.FromArgb(46, 204, 113)
+            };
+            
+            panel.Paint += (s, e) =>
+            {
+                using (LinearGradientBrush brush = new LinearGradientBrush(
+                    panel.ClientRectangle,
+                    Color.FromArgb(46, 204, 113),
+                    Color.FromArgb(39, 174, 96),
+                    LinearGradientMode.Horizontal))
+                {
+                    e.Graphics.FillRectangle(brush, panel.ClientRectangle);
+                }
             };
 
             Label lblHeader = new Label
@@ -51,122 +167,136 @@ namespace ZooApp
                 Font = new Font("Segoe UI", 20F, FontStyle.Bold),
                 ForeColor = Color.White,
                 AutoSize = true,
-                Location = new Point(20, 10)
+                Location = new Point(20, 12),
+                BackColor = Color.Transparent
             };
-            headerPanel.Controls.Add(lblHeader);
+            panel.Controls.Add(lblHeader);
 
-            // Tier-Info
             lblTierInfo = new Label
             {
                 Text = "Lade Tier-Informationen...",
                 Font = new Font("Segoe UI", 11F),
                 ForeColor = Color.White,
                 AutoSize = true,
-                Location = new Point(20, 45)
+                Location = new Point(20, 48),
+                BackColor = Color.Transparent
             };
-            headerPanel.Controls.Add(lblTierInfo);
-
-            this.Controls.Add(headerPanel);
-
-            // DataGridView für Fütterungsplan
-            dgvFutterplan = new DataGridView
-            {
-                Left = 20,
-                Top = 100,
-                Width = 840,
-                Height = 380,
-                BackgroundColor = Color.White,
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                ReadOnly = true,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                MultiSelect = false,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
-            };
-            this.Controls.Add(dgvFutterplan);
-
-            // Button-Panel
-            Panel buttonPanel = new Panel
-            {
-                Left = 20,
-                Top = 490,
-                Width = 840,
-                Height = 60
-            };
-
-            btnNeu = new Button
-            {
-                Text = "➕ Neu",
-                Left = 0,
-                Top = 10,
-                Width = 150,
-                Height = 40,
-                BackColor = Color.FromArgb(46, 204, 113),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
-                Cursor = Cursors.Hand
-            };
-            btnNeu.Click += btnNeu_Click;
-            buttonPanel.Controls.Add(btnNeu);
-
-            btnBearbeiten = new Button
-            {
-                Text = "✏️ Bearbeiten",
-                Left = 160,
-                Top = 10,
-                Width = 150,
-                Height = 40,
-                BackColor = Color.FromArgb(52, 152, 219),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
-                Cursor = Cursors.Hand
-            };
-            btnBearbeiten.Click += btnBearbeiten_Click;
-            buttonPanel.Controls.Add(btnBearbeiten);
-
-            btnLoeschen = new Button
-            {
-                Text = "🗑️ Löschen",
-                Left = 320,
-                Top = 10,
-                Width = 150,
-                Height = 40,
-                BackColor = Color.FromArgb(231, 76, 60),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
-                Cursor = Cursors.Hand
-            };
-            btnLoeschen.Click += btnLoeschen_Click;
-            buttonPanel.Controls.Add(btnLoeschen);
-
-            btnSchliessen = new Button
-            {
-                Text = "❌ Schließen",
-                Left = 690,
-                Top = 10,
-                Width = 150,
-                Height = 40,
-                BackColor = Color.FromArgb(149, 165, 166),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
-                Cursor = Cursors.Hand
-            };
-            btnSchliessen.Click += (s, e) => this.Close();
-            buttonPanel.Controls.Add(btnSchliessen);
-
-            this.Controls.Add(buttonPanel);
+            panel.Controls.Add(lblTierInfo);
+            
+            return panel;
         }
 
-        // Lädt den Fütterungsplan
+        /// <summary>
+        /// Erstellt alle Buttons mit dynamischer Positionierung
+        /// </summary>
+        private void CreateButtons()
+        {
+            int buttonWidth = 180;
+            int buttonSpacing = 15;
+            int totalButtonsWidth = (buttonWidth * 4) + (buttonSpacing * 3);
+            int startX = Math.Max(0, (buttonPanel.Width - totalButtonsWidth) / 2);
+            
+            // Wenn nicht genug Platz, Buttons kleiner machen
+            if (buttonPanel.Width < totalButtonsWidth)
+            {
+                buttonWidth = (buttonPanel.Width - (buttonSpacing * 3)) / 4;
+                startX = 0;
+            }
+
+            // Neu-Button
+            btnNeu = CreateModernButton("➕ Neu", startX, 0, buttonWidth, 50, 
+                Color.FromArgb(46, 204, 113));
+            btnNeu.Click += btnNeu_Click;
+            btnNeu.MouseEnter += (s, e) => btnNeu.BackColor = Color.FromArgb(39, 174, 96);
+            btnNeu.MouseLeave += (s, e) => btnNeu.BackColor = Color.FromArgb(46, 204, 113);
+
+            // Bearbeiten-Button
+            btnBearbeiten = CreateModernButton("✏️ Bearbeiten", 
+                startX + buttonWidth + buttonSpacing, 0, buttonWidth, 50, 
+                Color.FromArgb(52, 152, 219));
+            btnBearbeiten.Click += btnBearbeiten_Click;
+            btnBearbeiten.MouseEnter += (s, e) => btnBearbeiten.BackColor = Color.FromArgb(41, 128, 185);
+            btnBearbeiten.MouseLeave += (s, e) => btnBearbeiten.BackColor = Color.FromArgb(52, 152, 219);
+
+            // Löschen-Button
+            btnLoeschen = CreateModernButton("🗑️ Löschen", 
+                startX + (buttonWidth + buttonSpacing) * 2, 0, buttonWidth, 50, 
+                Color.FromArgb(231, 76, 60));
+            btnLoeschen.Click += btnLoeschen_Click;
+            btnLoeschen.MouseEnter += (s, e) => btnLoeschen.BackColor = Color.FromArgb(192, 57, 43);
+            btnLoeschen.MouseLeave += (s, e) => btnLoeschen.BackColor = Color.FromArgb(231, 76, 60);
+
+            // Schließen-Button
+            btnSchliessen = CreateModernButton("❌ Schließen", 
+                startX + (buttonWidth + buttonSpacing) * 3, 0, buttonWidth, 50, 
+                Color.FromArgb(149, 165, 166));
+            btnSchliessen.Click += (s, e) => this.Close();
+            btnSchliessen.MouseEnter += (s, e) => btnSchliessen.BackColor = Color.FromArgb(127, 140, 141);
+            btnSchliessen.MouseLeave += (s, e) => btnSchliessen.BackColor = Color.FromArgb(149, 165, 166);
+
+            buttonPanel.Controls.AddRange(new Control[] { btnNeu, btnBearbeiten, btnLoeschen, btnSchliessen });
+        }
+
+        /// <summary>
+        /// Passt Button-Layout bei Größenänderung an
+        /// </summary>
+        private void AdjustLayout()
+        {
+            if (buttonPanel == null || buttonPanel.Controls.Count != 4) return;
+            
+            int buttonWidth = 180;
+            int buttonSpacing = 15;
+            int totalButtonsWidth = (buttonWidth * 4) + (buttonSpacing * 3);
+            int startX = Math.Max(0, (buttonPanel.Width - totalButtonsWidth) / 2);
+            
+            if (buttonPanel.Width < totalButtonsWidth)
+            {
+                buttonWidth = (buttonPanel.Width - (buttonSpacing * 3)) / 4;
+                startX = 0;
+            }
+            
+            // Buttons neu positionieren
+            for (int i = 0; i < 4; i++)
+            {
+                buttonPanel.Controls[i].Left = startX + i * (buttonWidth + buttonSpacing);
+                buttonPanel.Controls[i].Width = buttonWidth;
+            }
+        }
+
+        /// <summary>
+        /// Erstellt einen modernen Button
+        /// </summary>
+        private Button CreateModernButton(string text, int x, int y, int width, int height, Color bgColor)
+        {
+            Button btn = new Button
+            {
+                Text = text,
+                Left = x,
+                Top = y,
+                Width = width,
+                Height = height,
+                BackColor = bgColor,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btn.FlatAppearance.BorderSize = 0;
+            return btn;
+        }
+
+        #endregion
+
+        #region Daten laden
+
+        /// <summary>
+        /// Lädt Fütterungsplan-Daten
+        /// </summary>
         private void LoadFutterplan()
         {
             try
             {
-                // Tier-Info laden
+                // Tier-Informationen laden
                 DataTable tierInfo = db.Get(@"
                     SELECT t.Name, ta.TABezeichnung
                     FROM Tiere t
@@ -186,9 +316,8 @@ namespace ZooApp
                     SELECT 
                         tf.tierart_futterID AS 'ID',
                         f.Bezeichnung AS 'Futter',
-                        tf.Menge_pro_Tag AS 'Menge',
-                        f.Einheit AS 'Einheit',
-                        TIME_FORMAT(tf.Fuetterungszeit, '%H:%i') AS 'Fuetterungszeit'
+                        CONCAT(tf.Menge_pro_Tag, ' ', f.Einheit) AS 'Menge',
+                        TIME_FORMAT(tf.Fuetterungszeit, '%H:%i Uhr') AS 'Fütterungszeit'
                     FROM tierart_futter tf
                     JOIN futter f ON tf.futterID = f.futterID
                     WHERE tf.tierartID = @tierartID
@@ -203,11 +332,23 @@ namespace ZooApp
                     dgvFutterplan.Columns["ID"].Visible = false;
                 }
 
-                // Hinweis wenn keine Einträge
+                // Spaltenbreiten anpassen
+                if (dgvFutterplan.Columns.Contains("Futter"))
+                    dgvFutterplan.Columns["Futter"].FillWeight = 150;
+                if (dgvFutterplan.Columns.Contains("Menge"))
+                    dgvFutterplan.Columns["Menge"].FillWeight = 80;
+                if (dgvFutterplan.Columns.Contains("Fütterungszeit"))
+                    dgvFutterplan.Columns["Fütterungszeit"].FillWeight = 100;
+
+                // WICHTIG: Selektion entfernen (verhindert blaue erste Zeile!)
+                if (dgvFutterplan.Rows.Count > 0)
+                {
+                    dgvFutterplan.ClearSelection();
+                }
+
                 if (dt.Rows.Count == 0)
                 {
-                    MessageBox.Show("ℹ️ Für diese Tierart ist noch kein Fütterungsplan angelegt.\n\n" +
-                        "Klicke auf 'Neu' um einen Eintrag hinzuzufügen.", 
+                    MessageBox.Show("ℹ️ Noch kein Fütterungsplan vorhanden.\nKlicke auf 'Neu' zum Erstellen.", 
                         "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
@@ -218,17 +359,19 @@ namespace ZooApp
             }
         }
 
-        // Neuen Eintrag hinzufügen
+        #endregion
+
+        #region Event-Handler
+
         private void btnNeu_Click(object sender, EventArgs e)
         {
             FutterplanEditDialog dialog = new FutterplanEditDialog(db, tierartID);
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                LoadFutterplan(); // Neu laden
+                LoadFutterplan();
             }
         }
 
-        // Bestehenden Eintrag bearbeiten
         private void btnBearbeiten_Click(object sender, EventArgs e)
         {
             if (dgvFutterplan.SelectedRows.Count == 0)
@@ -241,11 +384,10 @@ namespace ZooApp
             try
             {
                 int id = Convert.ToInt32(dgvFutterplan.SelectedRows[0].Cells["ID"].Value);
-                
                 FutterplanEditDialog dialog = new FutterplanEditDialog(db, tierartID, id);
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    LoadFutterplan(); // Neu laden
+                    LoadFutterplan();
                 }
             }
             catch (Exception ex)
@@ -255,7 +397,6 @@ namespace ZooApp
             }
         }
 
-        // Eintrag löschen
         private void btnLoeschen_Click(object sender, EventArgs e)
         {
             if (dgvFutterplan.SelectedRows.Count == 0)
@@ -265,8 +406,8 @@ namespace ZooApp
                 return;
             }
 
-            if (MessageBox.Show("Diesen Fütterungsplan-Eintrag wirklich löschen?", 
-                "Löschen bestätigen", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+            if (MessageBox.Show("Eintrag wirklich löschen?", "Bestätigen", 
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
             {
                 return;
             }
@@ -274,34 +415,32 @@ namespace ZooApp
             try
             {
                 int id = Convert.ToInt32(dgvFutterplan.SelectedRows[0].Cells["ID"].Value);
-                
                 db.Execute("DELETE FROM tierart_futter WHERE tierart_futterID = @id", ("@id", id));
-                
                 MessageBox.Show("✅ Eintrag gelöscht!", "Erfolg", 
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
-                
-                LoadFutterplan(); // Neu laden
+                LoadFutterplan();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"❌ Fehler beim Löschen:\n{ex.Message}", "Fehler", 
+                MessageBox.Show($"❌ Fehler:\n{ex.Message}", "Fehler", 
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        #endregion
     }
 
-    // Dialog zum Hinzufügen/Bearbeiten von Fütterungsplan-Einträgen
+    #region Bearbeiten-Dialog
+
     internal class FutterplanEditDialog : Form
     {
         private readonly DB db;
         private readonly int tierartID;
-        private readonly int? editID; // null = Neu, sonst = Bearbeiten
+        private readonly int? editID;
         
         private ComboBox cmbFutter;
         private NumericUpDown numMenge;
         private MaskedTextBox txtZeit;
-        private Button btnSpeichern;
-        private Button btnAbbrechen;
 
         public FutterplanEditDialog(DB db, int tierartID, int? editID = null)
         {
@@ -312,144 +451,143 @@ namespace ZooApp
             InitializeDialog();
             
             if (editID.HasValue)
-            {
                 LoadExistingData();
-            }
         }
 
-        // Dialog initialisieren
         private void InitializeDialog()
         {
-            this.Text = editID.HasValue ? "✏️ Fütterungsplan bearbeiten" : "➕ Fütterungsplan hinzufügen";
-            this.Size = new Size(450, 300);
+            this.Text = editID.HasValue ? "✏️ Bearbeiten" : "➕ Neu";
+            this.Size = new Size(500, 340);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.BackColor = Color.White;
+            this.BackColor = Color.FromArgb(236, 240, 241);
+
+            Panel cardPanel = new Panel
+            {
+                Left = 20,
+                Top = 20,
+                Width = 440,
+                Height = 250,
+                BackColor = Color.White
+            };
 
             int yPos = 20;
 
             // Futter
             Label lblFutter = new Label
             {
-                Text = "Futter:",
+                Text = "🍖 Futter:",
                 Left = 20,
                 Top = yPos,
-                Width = 100,
-                Font = new Font("Segoe UI", 10F, FontStyle.Bold)
+                AutoSize = true,
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold)
             };
-            this.Controls.Add(lblFutter);
+            cardPanel.Controls.Add(lblFutter);
+            yPos += 30;
 
             cmbFutter = new ComboBox
             {
-                Left = 130,
-                Top = yPos - 3,
-                Width = 280,
+                Left = 20,
+                Top = yPos,
+                Width = 400,
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Font = new Font("Segoe UI", 10F)
+                Font = new Font("Segoe UI", 11F)
             };
-            this.Controls.Add(cmbFutter);
+            cardPanel.Controls.Add(cmbFutter);
             yPos += 50;
 
             // Menge
             Label lblMenge = new Label
             {
-                Text = "Menge pro Tag:",
+                Text = "📦 Menge pro Tag:",
                 Left = 20,
                 Top = yPos,
-                Width = 100,
-                Font = new Font("Segoe UI", 10F, FontStyle.Bold)
+                AutoSize = true,
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold)
             };
-            this.Controls.Add(lblMenge);
+            cardPanel.Controls.Add(lblMenge);
+            yPos += 30;
 
             numMenge = new NumericUpDown
             {
-                Left = 130,
-                Top = yPos - 3,
-                Width = 150,
+                Left = 20,
+                Top = yPos,
+                Width = 180,
                 DecimalPlaces = 2,
                 Minimum = 0.01m,
                 Maximum = 1000,
                 Value = 5,
-                Increment = 0.5m,
-                Font = new Font("Segoe UI", 10F)
+                Font = new Font("Segoe UI", 11F)
             };
-            this.Controls.Add(numMenge);
+            cardPanel.Controls.Add(numMenge);
             yPos += 50;
 
-            // Fütterungszeit
+            // Zeit
             Label lblZeit = new Label
             {
-                Text = "Fütterungszeit:",
+                Text = "🕐 Fütterungszeit:",
                 Left = 20,
                 Top = yPos,
-                Width = 100,
-                Font = new Font("Segoe UI", 10F, FontStyle.Bold)
+                AutoSize = true,
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold)
             };
-            this.Controls.Add(lblZeit);
+            cardPanel.Controls.Add(lblZeit);
+            yPos += 30;
 
             txtZeit = new MaskedTextBox
             {
-                Left = 130,
-                Top = yPos - 3,
-                Width = 100,
+                Left = 20,
+                Top = yPos,
+                Width = 120,
                 Mask = "00:00",
                 Text = "08:00",
-                Font = new Font("Segoe UI", 10F)
+                Font = new Font("Segoe UI", 11F),
+                TextAlign = HorizontalAlignment.Center
             };
-            this.Controls.Add(txtZeit);
+            cardPanel.Controls.Add(txtZeit);
 
-            Label lblZeitHinweis = new Label
-            {
-                Text = "(HH:MM)",
-                Left = 240,
-                Top = yPos,
-                Width = 100,
-                Font = new Font("Segoe UI", 9F, FontStyle.Italic),
-                ForeColor = Color.Gray
-            };
-            this.Controls.Add(lblZeitHinweis);
-            yPos += 60;
+            this.Controls.Add(cardPanel);
 
             // Buttons
-            btnSpeichern = new Button
+            Button btnSpeichern = new Button
             {
                 Text = "💾 Speichern",
-                Left = 130,
-                Top = yPos,
-                Width = 130,
-                Height = 40,
+                Left = 155,
+                Top = 280,
+                Width = 150,
+                Height = 45,
                 BackColor = Color.FromArgb(46, 204, 113),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
                 Cursor = Cursors.Hand
             };
+            btnSpeichern.FlatAppearance.BorderSize = 0;
             btnSpeichern.Click += btnSpeichern_Click;
             this.Controls.Add(btnSpeichern);
 
-            btnAbbrechen = new Button
+            Button btnAbbrechen = new Button
             {
                 Text = "❌ Abbrechen",
-                Left = 270,
-                Top = yPos,
-                Width = 130,
-                Height = 40,
-                BackColor = Color.FromArgb(231, 76, 60),
+                Left = 315,
+                Top = 280,
+                Width = 150,
+                Height = 45,
+                BackColor = Color.FromArgb(149, 165, 166),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
                 Cursor = Cursors.Hand
             };
+            btnAbbrechen.FlatAppearance.BorderSize = 0;
             btnAbbrechen.Click += (s, e) => this.DialogResult = DialogResult.Cancel;
             this.Controls.Add(btnAbbrechen);
 
-            // Futter-Liste laden
             LoadFutterComboBox();
         }
 
-        // Lädt Futter in ComboBox
         private void LoadFutterComboBox()
         {
             try
@@ -467,15 +605,13 @@ namespace ZooApp
                     });
                 }
                 cmbFutter.DisplayMember = "Display";
-                cmbFutter.ValueMember = "FutterID";
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fehler beim Laden der Futtersorten:\n{ex.Message}", "Fehler");
+                MessageBox.Show($"Fehler: {ex.Message}", "Fehler");
             }
         }
 
-        // Lädt vorhandene Daten beim Bearbeiten
         private void LoadExistingData()
         {
             try
@@ -492,7 +628,6 @@ namespace ZooApp
                     numMenge.Value = Convert.ToDecimal(dt.Rows[0]["Menge_pro_Tag"]);
                     txtZeit.Text = dt.Rows[0]["Zeit"].ToString();
 
-                    // Futter auswählen
                     foreach (FutterItem item in cmbFutter.Items)
                     {
                         if (item.FutterID == futterID)
@@ -503,25 +638,20 @@ namespace ZooApp
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Fehler beim Laden:\n{ex.Message}", "Fehler");
-            }
+            catch { }
         }
 
-        // Speichern
         private void btnSpeichern_Click(object sender, EventArgs e)
         {
-            // Validierung
             if (cmbFutter.SelectedItem == null)
             {
-                MessageBox.Show("⚠️ Bitte Futter auswählen!", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("⚠️ Bitte Futter auswählen!", "Fehler");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(txtZeit.Text) || txtZeit.Text.Contains("_"))
             {
-                MessageBox.Show("⚠️ Bitte gültige Uhrzeit eingeben!", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("⚠️ Bitte gültige Uhrzeit eingeben!", "Fehler");
                 return;
             }
 
@@ -529,47 +659,32 @@ namespace ZooApp
             {
                 int futterID = ((FutterItem)cmbFutter.SelectedItem).FutterID;
                 decimal menge = numMenge.Value;
-                string zeit = txtZeit.Text + ":00"; // Sekunden hinzufügen
+                string zeit = txtZeit.Text + ":00";
 
                 if (editID.HasValue)
                 {
-                    // UPDATE
-                    db.Execute(@"
-                        UPDATE tierart_futter 
+                    db.Execute(@"UPDATE tierart_futter 
                         SET futterID = @futter, Menge_pro_Tag = @menge, Fuetterungszeit = @zeit
                         WHERE tierart_futterID = @id",
-                        ("@futter", futterID),
-                        ("@menge", menge),
-                        ("@zeit", zeit),
-                        ("@id", editID.Value));
-
-                    MessageBox.Show("✅ Eintrag aktualisiert!", "Erfolg", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        ("@futter", futterID), ("@menge", menge), ("@zeit", zeit), ("@id", editID.Value));
+                    MessageBox.Show("✅ Aktualisiert!", "Erfolg");
                 }
                 else
                 {
-                    // INSERT
-                    db.Execute(@"
-                        INSERT INTO tierart_futter (tierartID, futterID, Menge_pro_Tag, Fuetterungszeit)
+                    db.Execute(@"INSERT INTO tierart_futter (tierartID, futterID, Menge_pro_Tag, Fuetterungszeit)
                         VALUES (@tierart, @futter, @menge, @zeit)",
-                        ("@tierart", tierartID),
-                        ("@futter", futterID),
-                        ("@menge", menge),
-                        ("@zeit", zeit));
-
-                    MessageBox.Show("✅ Eintrag hinzugefügt!", "Erfolg", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        ("@tierart", tierartID), ("@futter", futterID), ("@menge", menge), ("@zeit", zeit));
+                    MessageBox.Show("✅ Hinzugefügt!", "Erfolg");
                 }
 
                 this.DialogResult = DialogResult.OK;
-                this.Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"❌ Fehler beim Speichern:\n{ex.Message}", "Fehler", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"❌ Fehler:\n{ex.Message}", "Fehler");
             }
         }
 
-        // Hilfsklasse für ComboBox
         private class FutterItem
         {
             public int FutterID { get; set; }
@@ -578,4 +693,6 @@ namespace ZooApp
             public string Display => $"{Bezeichnung} ({Einheit})";
         }
     }
+
+    #endregion
 }

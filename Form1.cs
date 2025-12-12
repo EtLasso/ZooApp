@@ -10,10 +10,11 @@ namespace ZooApp
     {
         #region Private Felder
 
-        private readonly DB db = new DB();
-        private readonly ZooDB zooDb = new ZooDB();
+        // Datenbankverbindungen
+        private readonly DB db = new DB();           // Basis-Datenbank-Klasse
+        private readonly ZooDB zooDb = new ZooDB();  // Erweiterte Zoo-Funktionen
 
-        // Aktuell ausgewählte IDs
+        // Aktuell ausgewählte IDs für die verschiedenen Entitäten
         private int currentKontinentId = 0;
         private int currentGehegeId = 0;
         private int currentTierartId = 0;
@@ -24,17 +25,20 @@ namespace ZooApp
 
         #region Initialisierung
 
+        // Konstruktor - wird beim Start der App aufgerufen
         public Form1()
         {
+            // Initialisiert alle Designer-Controls (aus Form1.Designer.cs)
             InitializeComponent();
 
-            // Button zum Erstellen von Futterplänen hinzufügen
+            // Fügt den Fütterungsplan-Button dynamisch hinzu
             AddFutterplanButton();
         }
 
         // Fügt dynamisch einen Button zum Erstellen von Futterplänen hinzu
         private void AddFutterplanButton()
         {
+            // Erstelle neuen Button mit allen Eigenschaften
             Button btnFutterplanNeu = new Button
             {
                 Text = "➕ Fütterungsplan erstellen",
@@ -49,48 +53,55 @@ namespace ZooApp
                 Cursor = Cursors.Hand
             };
 
-            btnFutterplanNeu.FlatAppearance.BorderSize = 0;
+            // Event-Handler für Klick registrieren
             btnFutterplanNeu.Click += btnFutterplanNeu_Click;
 
-            // Button zum Fütterungsplan-Tab hinzufügen (Null-Check)
+            // Button zum Fütterungsplan-Tab hinzufügen (mit Null-Check)
+            // Tab-Index 7 = tabPage8 (Fütterungsplan)
             if (tabControl1?.TabPages != null && tabControl1.TabPages.Count > 7)
-            {
+            {                
                 tabControl1.TabPages[7].Controls.Add(btnFutterplanNeu);
+                
+                // FlatAppearance NACH dem Hinzufügen zum Container setzen
+                btnFutterplanNeu.FlatAppearance.BorderSize = 0;
             }
         }
 
-        // Wird beim Laden des Formulars aufgerufen
+        // Wird beim Laden des Formulars aufgerufen (nach dem Anzeigen)
         private void Form1_Load(object sender, EventArgs e)
         {
-            // Datenbankverbindung testen
+            // 1. Datenbankverbindung testen
             if (!db.Test())
-            {
-                MessageBox.Show("❌ Keine Verbindung zur Datenbank!\n\nBitte XAMPP starten und MySQL läuft.",
+            {                MessageBox.Show("❌ Keine Verbindung zur Datenbank!\n\nBitte XAMPP starten und MySQL läuft.",
                     "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 UpdateStatus("❌ Datenbank nicht verbunden");
-                return;
+                return;  // Abbrechen wenn keine DB-Verbindung
             }
 
             UpdateStatus("✅ Verbunden mit Datenbank");
 
             try
             {
-                // Alle Daten laden
+                // 2. Stammdaten laden (Kontinente, Gehege, Tierarten, Tiere)
                 LoadKontinente();
                 LoadGehege();
                 LoadTierarten();
                 LoadTiere();
+                
+                // 3. ComboBoxen füllen
                 LoadKontinentComboBox();
                 LoadTierartComboBox();
                 LoadGehegeComboBox();
-                LoadUebersicht();
                 LoadTierartComboBoxFutterplan();
+                
+                // 4. Übersicht und Eingabefelder initialisieren
+                LoadUebersicht();
                 ClearFutterFields();
 
-                // Doppelklick-Event für Tier-Liste registrieren
+                // 5. Doppelklick-Event für Tier-Liste registrieren (Detail-Ansicht öffnen)
                 lbTiere.DoubleClick += lbTiere_DoubleClick;
 
-                // Alle Tabs initial laden
+                // 6. Alle Tabs mit Daten befüllen
                 LoadFutterListe();
                 LoadNachbestellung();
                 LoadFutterplan();
@@ -101,6 +112,7 @@ namespace ZooApp
             }
             catch (Exception ex)
             {
+                // Fehler anzeigen mit Details
                 MessageBox.Show($"Fehler beim Laden: {ex.Message}\n\nDetails: {ex.StackTrace}", "Fehler",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -549,13 +561,22 @@ namespace ZooApp
 
         #region ÜBERSICHT
 
-        // Lädt komplette Tier-Übersicht
+        /// <summary>
+        /// Lädt komplette Tier-Übersicht mit allen Details.
+        /// Zeigt alle Tiere mit Stammdaten in der DataGridView an.
+        /// </summary>
         private void LoadUebersicht()
         {
-            if (dgvUebersicht == null) return;
+            // Sicherheitscheck: Ist das DataGridView überhaupt vorhanden?
+            if (dgvUebersicht == null)
+            {
+                Console.WriteLine("FEHLER: dgvUebersicht ist null!");
+                return;
+            }
 
             try
             {
+                // SQL-Abfrage vorbereiten
                 string sql = @"
                     SELECT 
                         t.tierID AS 'ID',
@@ -580,63 +601,206 @@ namespace ZooApp
                     LEFT JOIN Kontinent k ON g.kontinentID = k.kID
                     ORDER BY t.Name";
 
+                Console.WriteLine("LoadUebersicht: Starte DB-Abfrage...");
+                
+                // Daten aus Datenbank laden
                 DataTable dt = db.Get(sql);
-                dgvUebersicht.DataSource = dt;
-                dgvUebersicht.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-
-                Application.DoEvents();
-
-                if (dgvUebersicht.Columns != null && dgvUebersicht.Columns.Count > 0)
+                Console.WriteLine($"LoadUebersicht: {dt.Rows.Count} Zeilen geladen");
+                
+                // Event-Handler VORHER entfernen (verhindert Events während des Ladens)
+                dgvUebersicht.CellDoubleClick -= dgvUebersicht_CellDoubleClick;
+                
+                // Layout-Updates während der Aktualisierung suspendieren (Performance + Stabilität)
+                dgvUebersicht.SuspendLayout();
+                
+                try
                 {
-                    if (dgvUebersicht.Columns.Contains("ID"))
-                    {
-                        dgvUebersicht.Columns["ID"].Width = 50;
-                        dgvUebersicht.Columns["ID"].ReadOnly = true;
-                    }
+                    // DataGridView mit Daten füllen
+                    dgvUebersicht.DataSource = dt;
+                    Console.WriteLine("LoadUebersicht: DataSource gesetzt");
+                    
+                    // AutoSizeColumnsMode setzen
+                    // WICHTIG: Bei Fill-Modus sollte Width NICHT manuell gesetzt werden!
+                    dgvUebersicht.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+                    Console.WriteLine("LoadUebersicht: AutoSizeColumnsMode gesetzt");
+                }
+                finally
+                {
+                    // Layout-Updates wieder aktivieren (immer ausführen, auch bei Fehler)
+                    dgvUebersicht.ResumeLayout();
+                    Console.WriteLine("LoadUebersicht: ResumeLayout abgeschlossen");
                 }
 
-                dgvUebersicht.CellDoubleClick -= dgvUebersicht_CellDoubleClick;
-                dgvUebersicht.CellDoubleClick += dgvUebersicht_CellDoubleClick;
+                // GUI-Update abwarten
+                Application.DoEvents();
+                Console.WriteLine("LoadUebersicht: DoEvents abgeschlossen");
 
+                // Spalten-Einstellungen vornehmen (nur ReadOnly, KEINE Width-Änderungen!)
+                if (dgvUebersicht.Columns != null && dgvUebersicht.Columns.Count > 0)
+                {
+                    Console.WriteLine($"LoadUebersicht: {dgvUebersicht.Columns.Count} Spalten vorhanden");
+                    
+                    if (dgvUebersicht.Columns.Contains("ID"))
+                    {
+                        // Spalte existiert und ist vollständig initialisiert
+                        var idColumn = dgvUebersicht.Columns["ID"];
+                        
+                        if (idColumn != null)
+                        {
+                            // WICHTIG: Bei AutoSizeColumnsMode.Fill keine Width setzen!
+                            // Stattdessen FillWeight verwenden für relative Größe
+                            idColumn.FillWeight = 10;  // ID-Spalte bekommt weniger Platz (10% statt Standard 100%)
+                            idColumn.ReadOnly = true;
+                            Console.WriteLine("LoadUebersicht: ID-Spalte konfiguriert (FillWeight=10)");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("WARNUNG: ID-Spalte nicht gefunden!");
+                    }
+                    
+                    // Optional: Andere Spalten auch mit FillWeight konfigurieren
+                    if (dgvUebersicht.Columns.Contains("Name"))
+                    {
+                        dgvUebersicht.Columns["Name"].FillWeight = 120;  // Name bekommt mehr Platz
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("WARNUNG: Keine Spalten vorhanden!");
+                }
+
+                // Event-Handler NACH der vollständigen Initialisierung registrieren
+                try
+                {
+                    Console.WriteLine("LoadUebersicht: Registriere Event-Handler...");
+                    dgvUebersicht.CellDoubleClick += dgvUebersicht_CellDoubleClick;
+                    Console.WriteLine("LoadUebersicht: Event-Handler hinzugefügt");
+                }
+                catch (Exception eventEx)
+                {
+                    Console.WriteLine($"FEHLER beim Event-Handler: {eventEx.Message}");
+                    // Nicht weitergeben - das ist kein kritischer Fehler
+                }
+
+                // Status aktualisieren
                 UpdateStatus($"✅ {dt.Rows.Count} Tiere - Doppelklick für Details");
+                Console.WriteLine("LoadUebersicht: Erfolgreich abgeschlossen");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fehler:\n{ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                UpdateStatus("❌ Fehler beim Laden");
+                // Detaillierte Fehlerausgabe
+                string errorMessage = $"Fehler in LoadUebersicht():\n" +
+                                     $"Message: {ex.Message}\n" +
+                                     $"Source: {ex.Source}\n" +
+                                     $"StackTrace:\n{ex.StackTrace}";
+                
+                if (ex.InnerException != null)
+                {
+                    errorMessage += $"\n\nInner Exception:\n{ex.InnerException.Message}";
+                }
+                
+                Console.WriteLine($"FEHLER: {errorMessage}");
+                
+                MessageBox.Show($"Fehler beim Laden der Übersicht:\n\n{ex.Message}", 
+                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                
+                // UpdateStatus nur aufrufen wenn lblStatus existiert
+                try
+                {
+                    UpdateStatus("❌ Fehler beim Laden");
+                }
+                catch
+                {
+                    Console.WriteLine("Konnte Status nicht aktualisieren (lblStatus = null?)");
+                }
             }
         }
 
-        // Doppelklick öffnet Detail-Fenster
+        /// <summary>
+        /// Event-Handler für Doppelklick auf eine Zeile in der Übersicht.
+        /// Öffnet das Detail-Fenster für das ausgewählte Tier.
+        /// </summary>
         private void dgvUebersicht_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0) return;
+            Console.WriteLine($"CellDoubleClick: Ereignis ausgelöst für Zeile {e.RowIndex}, Spalte {e.ColumnIndex}");
+            
+            // Prüfen ob eine gültige Zeile angeklickt wurde (nicht Header)
+            if (e.RowIndex < 0)
+            {
+                Console.WriteLine("CellDoubleClick: Header-Zeile angeklickt, ignoriere...");
+                return;
+            }
 
             try
             {
-                if (dgvUebersicht.Columns == null || !dgvUebersicht.Columns.Contains("ID"))
+                Console.WriteLine("CellDoubleClick: Prüfe Columns...");
+                
+                // Prüfen ob Columns-Collection existiert
+                if (dgvUebersicht.Columns == null)
                 {
-                    MessageBox.Show("ID-Spalte nicht gefunden!", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Fehler: Keine Spalten vorhanden!", "Fehler", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Console.WriteLine("FEHLER: dgvUebersicht.Columns ist null!");
                     return;
                 }
+                
+                // Prüfen ob ID-Spalte existiert
+                if (!dgvUebersicht.Columns.Contains("ID"))
+                {
+                    MessageBox.Show("Fehler: ID-Spalte nicht gefunden!", "Fehler", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Console.WriteLine("FEHLER: ID-Spalte existiert nicht!");
+                    return;
+                }
+                
+                Console.WriteLine("CellDoubleClick: Hole Zellenwert...");
 
+                // Zellenwert holen
                 var cellValue = dgvUebersicht.Rows[e.RowIndex].Cells["ID"].Value;
+                
+                // Prüfen ob Wert vorhanden
                 if (cellValue == null || cellValue == DBNull.Value)
                 {
-                    MessageBox.Show("Keine Tier-ID gefunden!", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Fehler: Keine Tier-ID gefunden!", "Fehler", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Console.WriteLine($"FEHLER: Zellenwert ist null oder DBNull bei Zeile {e.RowIndex}");
                     return;
                 }
 
+                // TierID extrahieren
                 int tierID = Convert.ToInt32(cellValue);
+                Console.WriteLine($"CellDoubleClick: Öffne Detail-Fenster für TierID {tierID}");
+                
+                // Detail-Fenster öffnen
                 TierDetailForm detailForm = new TierDetailForm(tierID);
                 detailForm.ShowDialog();
+                
+                Console.WriteLine("CellDoubleClick: Detail-Fenster geschlossen, lade Daten neu...");
 
+                // Daten nach dem Schließen neu laden
                 LoadUebersicht();
                 LoadTiere();
+                
+                Console.WriteLine("CellDoubleClick: Erfolgreich abgeschlossen");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fehler:\n{ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Detaillierte Fehlerausgabe
+                string errorMessage = $"Fehler in dgvUebersicht_CellDoubleClick():\n" +
+                                     $"Message: {ex.Message}\n" +
+                                     $"Source: {ex.Source}\n" +
+                                     $"StackTrace:\n{ex.StackTrace}";
+                
+                if (ex.InnerException != null)
+                {
+                    errorMessage += $"\n\nInner Exception:\n{ex.InnerException.Message}";
+                }
+                
+                Console.WriteLine($"FEHLER: {errorMessage}");
+                
+                MessageBox.Show($"Fehler beim Öffnen des Detail-Fensters:\n\n{ex.Message}", 
+                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

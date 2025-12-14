@@ -457,7 +457,7 @@ namespace ZooApp
         private void InitializeDialog()
         {
             this.Text = editID.HasValue ? "✏️ Bearbeiten" : "➕ Neu";
-            this.Size = new Size(500, 340);
+            this.Size = new Size(520, 450);  // Größer: 340 -> 450
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -468,8 +468,8 @@ namespace ZooApp
             {
                 Left = 20,
                 Top = 20,
-                Width = 440,
-                Height = 250,
+                Width = 460,  // Breiter: 440 -> 460
+                Height = 320,  // Höher: 250 -> 320
                 BackColor = Color.White
             };
 
@@ -491,7 +491,7 @@ namespace ZooApp
             {
                 Left = 20,
                 Top = yPos,
-                Width = 400,
+                Width = 420,  // Breiter: 400 -> 420
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 11F)
             };
@@ -554,8 +554,8 @@ namespace ZooApp
             Button btnSpeichern = new Button
             {
                 Text = "💾 Speichern",
-                Left = 155,
-                Top = 280,
+                Left = 165,  // Neu positioniert
+                Top = 360,  // Tiefer: 280 -> 360
                 Width = 150,
                 Height = 45,
                 BackColor = Color.FromArgb(46, 204, 113),
@@ -571,8 +571,8 @@ namespace ZooApp
             Button btnAbbrechen = new Button
             {
                 Text = "❌ Abbrechen",
-                Left = 315,
-                Top = 280,
+                Left = 325,  // Neu positioniert
+                Top = 360,  // Tiefer: 280 -> 360
                 Width = 150,
                 Height = 45,
                 BackColor = Color.FromArgb(149, 165, 166),

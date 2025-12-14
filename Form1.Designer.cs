@@ -96,6 +96,12 @@ namespace ZooApp
             tabPage10 = new TabPage();
             dgvBestellungen = new DataGridView();
             btnLadeBestellungen = new Button();
+            tabPage11 = new TabPage();
+            lbPfleger = new ListBox();
+            btnNewPfleger = new Button();
+            btnEditPfleger = new Button();
+            btnDelPfleger = new Button();
+            btnRefreshPfleger = new Button();
             statusStrip1 = new StatusStrip();
             lblStatus = new ToolStripStatusLabel();
             panelHeader = new Panel();
@@ -149,6 +155,7 @@ namespace ZooApp
             tabControl1.Controls.Add(tabPage8);
             tabControl1.Controls.Add(tabPage9);
             tabControl1.Controls.Add(tabPage10);
+            tabControl1.Controls.Add(tabPage11);
             tabControl1.Dock = DockStyle.Fill;
             tabControl1.Font = new Font("Segoe UI", 10F);
             tabControl1.Location = new Point(0, 93);
@@ -1222,6 +1229,109 @@ namespace ZooApp
             btnLadeBestellungen.UseVisualStyleBackColor = false;
             btnLadeBestellungen.Click += btnLadeBestellungen_Click;
             // 
+            // tabPage11
+            // 
+            tabPage11.BackColor = Color.WhiteSmoke;
+            tabPage11.Controls.Add(btnRefreshPfleger);
+            tabPage11.Controls.Add(btnDelPfleger);
+            tabPage11.Controls.Add(btnEditPfleger);
+            tabPage11.Controls.Add(btnNewPfleger);
+            tabPage11.Controls.Add(lbPfleger);
+            tabPage11.Location = new Point(4, 36);
+            tabPage11.Margin = new Padding(3, 4, 3, 4);
+            tabPage11.Name = "tabPage11";
+            tabPage11.Padding = new Padding(17, 20, 17, 20);
+            tabPage11.Size = new Size(1363, 841);
+            tabPage11.TabIndex = 10;
+            tabPage11.Text = "⑪ U0001f468‍U0001f33e Pfleger";
+            // 
+            // lbPfleger
+            // 
+            lbPfleger.BackColor = Color.White;
+            lbPfleger.BorderStyle = BorderStyle.FixedSingle;
+            lbPfleger.Font = new Font("Segoe UI", 10F);
+            lbPfleger.FormattingEnabled = true;
+            lbPfleger.Location = new Point(20, 20);
+            lbPfleger.Margin = new Padding(3, 4, 3, 4);
+            lbPfleger.Name = "lbPfleger";
+            lbPfleger.Size = new Size(800, 772);
+            lbPfleger.TabIndex = 0;
+            lbPfleger.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            lbPfleger.SelectedIndexChanged += lbPfleger_SelectedIndexChanged;
+            lbPfleger.DoubleClick += lbPfleger_DoubleClick;
+            // 
+            // btnNewPfleger
+            // 
+            btnNewPfleger.BackColor = Color.FromArgb(46, 204, 113);
+            btnNewPfleger.Cursor = Cursors.Hand;
+            btnNewPfleger.FlatAppearance.BorderSize = 0;
+            btnNewPfleger.FlatStyle = FlatStyle.Flat;
+            btnNewPfleger.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnNewPfleger.ForeColor = Color.White;
+            btnNewPfleger.Location = new Point(840, 20);
+            btnNewPfleger.Margin = new Padding(3, 4, 3, 4);
+            btnNewPfleger.Name = "btnNewPfleger";
+            btnNewPfleger.Size = new Size(180, 60);
+            btnNewPfleger.TabIndex = 1;
+            btnNewPfleger.Text = "➕ Neu";
+            btnNewPfleger.UseVisualStyleBackColor = false;
+            btnNewPfleger.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnNewPfleger.Click += btnNewPfleger_Click;
+            // 
+            // btnEditPfleger
+            // 
+            btnEditPfleger.BackColor = Color.FromArgb(52, 152, 219);
+            btnEditPfleger.Cursor = Cursors.Hand;
+            btnEditPfleger.FlatAppearance.BorderSize = 0;
+            btnEditPfleger.FlatStyle = FlatStyle.Flat;
+            btnEditPfleger.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnEditPfleger.ForeColor = Color.White;
+            btnEditPfleger.Location = new Point(840, 100);
+            btnEditPfleger.Margin = new Padding(3, 4, 3, 4);
+            btnEditPfleger.Name = "btnEditPfleger";
+            btnEditPfleger.Size = new Size(180, 60);
+            btnEditPfleger.TabIndex = 2;
+            btnEditPfleger.Text = "✏️ Bearbeiten";
+            btnEditPfleger.UseVisualStyleBackColor = false;
+            btnEditPfleger.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnEditPfleger.Click += btnEditPfleger_Click;
+            // 
+            // btnDelPfleger
+            // 
+            btnDelPfleger.BackColor = Color.FromArgb(231, 76, 60);
+            btnDelPfleger.Cursor = Cursors.Hand;
+            btnDelPfleger.FlatAppearance.BorderSize = 0;
+            btnDelPfleger.FlatStyle = FlatStyle.Flat;
+            btnDelPfleger.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnDelPfleger.ForeColor = Color.White;
+            btnDelPfleger.Location = new Point(840, 180);
+            btnDelPfleger.Margin = new Padding(3, 4, 3, 4);
+            btnDelPfleger.Name = "btnDelPfleger";
+            btnDelPfleger.Size = new Size(180, 60);
+            btnDelPfleger.TabIndex = 3;
+            btnDelPfleger.Text = "U0001f5d1️ Löschen";
+            btnDelPfleger.UseVisualStyleBackColor = false;
+            btnDelPfleger.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnDelPfleger.Click += btnDelPfleger_Click;
+            // 
+            // btnRefreshPfleger
+            // 
+            btnRefreshPfleger.BackColor = Color.FromArgb(149, 165, 166);
+            btnRefreshPfleger.Cursor = Cursors.Hand;
+            btnRefreshPfleger.FlatAppearance.BorderSize = 0;
+            btnRefreshPfleger.FlatStyle = FlatStyle.Flat;
+            btnRefreshPfleger.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnRefreshPfleger.ForeColor = Color.White;
+            btnRefreshPfleger.Location = new Point(840, 260);
+            btnRefreshPfleger.Margin = new Padding(3, 4, 3, 4);
+            btnRefreshPfleger.Name = "btnRefreshPfleger";
+            btnRefreshPfleger.Size = new Size(180, 60);
+            btnRefreshPfleger.TabIndex = 4;
+            btnRefreshPfleger.Text = "U0001f504 Aktualisieren";
+            btnRefreshPfleger.UseVisualStyleBackColor = false;
+            btnRefreshPfleger.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnRefreshPfleger.Click += btnRefreshPfleger_Click;
+            // 
             // statusStrip1
             // 
             statusStrip1.ImageScalingSize = new Size(20, 20);
@@ -1402,5 +1512,11 @@ namespace ZooApp
         private ToolStripStatusLabel lblStatus;
         private Panel panelHeader;
         private Label lblTitle;
+        private TabPage tabPage11;
+        private ListBox lbPfleger;
+        private Button btnNewPfleger;
+        private Button btnEditPfleger;
+        private Button btnDelPfleger;
+        private Button btnRefreshPfleger;
     }
 }

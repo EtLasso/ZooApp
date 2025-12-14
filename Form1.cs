@@ -107,6 +107,7 @@ namespace ZooApp
                 LoadFutterplan();
                 LoadTagesbedarf();
                 LoadBestellungen();
+                LoadPfleger();  // Pfleger laden
 
                 UpdateStatus("✅ Alle Daten geladen");
             }
@@ -133,6 +134,7 @@ namespace ZooApp
                     case 7: LoadFutterplan(); UpdateStatus("✅ Fütterungsplan geladen"); break;
                     case 8: LoadTagesbedarf(); UpdateStatus("✅ Tagesbedarf geladen"); break;
                     case 9: LoadBestellungen(); UpdateStatus("✅ Bestellungen geladen"); break;
+                    case 10: LoadPfleger(); UpdateStatus("✅ Pfleger geladen"); break;  // Pfleger-Tab
                 }
             }
             catch (Exception ex)
@@ -1218,6 +1220,191 @@ namespace ZooApp
         private void btnLadeBestellungen_Click(object sender, EventArgs e)
         {
             LoadBestellungen();
+        }
+
+        #endregion
+
+        #region PFLEGER
+
+        private int currentPflegerId = 0;
+
+        /// <summary>
+        /// Lädt alle Pfleger in die ListBox
+        /// </summary>
+        private void LoadPfleger()
+        {
+            try
+            {
+                DataTable dt = db.Get(@"
+                    SELECT pflegerID, Vorname, Nachname, Gehalt, Einstellungsdatum
+                    FROM pfleger
+                    ORDER BY Nachname, Vorname");
+
+                lbPfleger.Items.Clear();
+                foreach (DataRow row in dt.Rows)
+                {
+                    string eintrag = $"{row["pflegerID"]} - {row["Nachname"]}, {row["Vorname"]} " +
+                                   $"(Gehalt: {Convert.ToDecimal(row["Gehalt"]):C}, seit {Convert.ToDateTime(row["Einstellungsdatum"]):dd.MM.yyyy})";
+                    lbPfleger.Items.Add(eintrag);
+                }
+                
+                UpdateStatus($"✅ {dt.Rows.Count} Pfleger geladen");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler beim Laden der Pfleger:\n{ex.Message}", "Fehler",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Pfleger wurde in ListBox ausgewählt
+        /// </summary>
+        private void lbPfleger_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (lbPfleger.SelectedItem == null) return;
+            
+            try
+            {
+                currentPflegerId = int.Parse(lbPfleger.SelectedItem.ToString().Split('-')[0].Trim());
+            }
+            catch
+            {
+                currentPflegerId = 0;
+            }
+        }
+
+        /// <summary>
+        /// Doppelklick öffnet Detail-Fenster
+        /// </summary>
+        private void lbPfleger_DoubleClick(object sender, EventArgs e)
+        {
+            if (lbPfleger.SelectedItem == null)
+            {
+                MessageBox.Show("Bitte zuerst einen Pfleger auswählen.", "Hinweis",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            try
+            {
+                int pflegerID = int.Parse(lbPfleger.SelectedItem.ToString().Split('-')[0].Trim());
+                PflegerDetailForm detailForm = new PflegerDetailForm(pflegerID);
+                detailForm.ShowDialog();
+                LoadPfleger(); // Neu laden nach Änderungen
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler:\n{ex.Message}", "Fehler",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Neuen Pfleger erstellen
+        /// </summary>
+        private void btnNewPfleger_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Neuen Pfleger in DB einfügen
+                db.Execute(@"
+                    INSERT INTO pfleger (Vorname, Nachname, Einstellungsdatum, Gehalt)
+                    VALUES ('Neuer', 'Pfleger', CURDATE(), 2500.00)");
+
+                // ID des neu erstellten Pflegers holen
+                DataTable dt = db.Get("SELECT LAST_INSERT_ID() as id");
+                int neueID = Convert.ToInt32(dt.Rows[0]["id"]);
+
+                // Detail-Fenster öffnen
+                PflegerDetailForm detailForm = new PflegerDetailForm(neueID);
+                if (detailForm.ShowDialog() == DialogResult.OK)
+                {
+                    LoadPfleger();
+                }
+                else
+                {
+                    // Falls abgebrochen, leeren Eintrag löschen
+                    db.Execute("DELETE FROM pfleger WHERE pflegerID = @id", ("@id", neueID));
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler:\n{ex.Message}", "Fehler",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Pfleger bearbeiten
+        /// </summary>
+        private void btnEditPfleger_Click(object sender, EventArgs e)
+        {
+            if (currentPflegerId == 0)
+            {
+                MessageBox.Show("Bitte zuerst einen Pfleger auswählen!", "Hinweis",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            try
+            {
+                PflegerDetailForm detailForm = new PflegerDetailForm(currentPflegerId);
+                detailForm.ShowDialog();
+                LoadPfleger();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler:\n{ex.Message}", "Fehler",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Pfleger löschen
+        /// </summary>
+        private void btnDelPfleger_Click(object sender, EventArgs e)
+        {
+            if (currentPflegerId == 0)
+            {
+                MessageBox.Show("Bitte zuerst einen Pfleger auswählen!", "Hinweis",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            try
+            {
+                // Name holen für Bestätigung
+                DataTable dt = db.Get("SELECT Vorname, Nachname FROM pfleger WHERE pflegerID = @id",
+                    ("@id", currentPflegerId));
+                
+                if (dt.Rows.Count == 0) return;
+                
+                string name = $"{dt.Rows[0]["Vorname"]} {dt.Rows[0]["Nachname"]}";
+
+                if (MessageBox.Show($"Pfleger '{name}' wirklich löschen?", "Löschen bestätigen",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    db.Execute("DELETE FROM pfleger WHERE pflegerID = @id", ("@id", currentPflegerId));
+                    LoadPfleger();
+                    currentPflegerId = 0;
+                    MessageBox.Show("✅ Pfleger gelöscht!", "Erfolg",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler beim Löschen:\n{ex.Message}", "Fehler",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Pfleger-Liste neu laden
+        /// </summary>
+        private void btnRefreshPfleger_Click(object sender, EventArgs e)
+        {
+            LoadPfleger();
         }
 
         #endregion

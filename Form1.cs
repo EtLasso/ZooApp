@@ -2,6 +2,8 @@ using System;
 using System.Data;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Xml;
+using System.IO;
 
 namespace ZooApp
 {
@@ -20,7 +22,10 @@ namespace ZooApp
         private int currentTierartId = 0;
         private int currentTierId = 0;
         private int currentFutterId = 0;
+        private int currentFuelId = 0;
+        private int currentGoldId = 0;
 
+        
         #endregion
 
         #region Initialisierung
@@ -68,56 +73,61 @@ namespace ZooApp
         }
 
         // Wird beim Laden des Formulars aufgerufen (nach dem Anzeigen)
+        // Wird beim Laden des Formulars aufgerufen (nach dem Anzeigen)
         private void Form1_Load(object sender, EventArgs e)
-        {
-            // 1. Datenbankverbindung testen
-            if (!db.Test())
-            {                MessageBox.Show("❌ Keine Verbindung zur Datenbank!\n\nBitte XAMPP starten und MySQL läuft.",
-                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                UpdateStatus("❌ Datenbank nicht verbunden");
-                return;  // Abbrechen wenn keine DB-Verbindung
-            }
+{
+    // 1. Datenbankverbindung testen
+    if (!db.Test())
+    {                
+        MessageBox.Show("❌ Keine Verbindung zur Datenbank!\n\nBitte XAMPP starten und MySQL läuft.",
+            "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        UpdateStatus("❌ Datenbank nicht verbunden");
+        return;
+    }
 
-            UpdateStatus("✅ Verbunden mit Datenbank");
+    UpdateStatus("✅ Verbunden mit Datenbank");
 
-            try
-            {
-                // 2. Stammdaten laden (Kontinente, Gehege, Tierarten, Tiere)
-                LoadKontinente();
-                LoadGehege();
-                LoadTierarten();
-                LoadTiere();
-                
-                // 3. ComboBoxen füllen
-                LoadKontinentComboBox();
-                LoadTierartComboBox();
-                LoadGehegeComboBox();
-                LoadTierartComboBoxFutterplan();
-                
-                // 4. Übersicht und Eingabefelder initialisieren
-                LoadUebersicht();
-                ClearFutterFields();
+    try
+    {
+        // 2. Stammdaten laden (Kontinente, Gehege, Tierarten, Tiere)
+        LoadKontinente();
+        LoadGehege();
+        LoadTierarten();
+        LoadTiere();
+        
+        // 3. ComboBoxen füllen
+        LoadKontinentComboBox();
+        LoadTierartComboBox();
+        LoadGehegeComboBox();
+        LoadTierartComboBoxFutterplan();
+        
+        // 4. Übersicht und Eingabefelder initialisieren
+        LoadUebersicht();
+        ClearFutterFields();
 
-                // 5. Doppelklick-Event für Tier-Liste registrieren (Detail-Ansicht öffnen)
-                lbTiere.DoubleClick += lbTiere_DoubleClick;
+        // 5. Dynamische Buttons erstellen (NACH Daten geladen)
+        AddFutterplanButton();
+        CreateXmlButtons();  // NEU: XML-Buttons hinzufügen
 
-                // 6. Alle Tabs mit Daten befüllen
-                LoadFutterListe();
-                LoadNachbestellung();
-                LoadFutterplan();
-                LoadTagesbedarf();
-                LoadBestellungen();
-                LoadPfleger();  // Pfleger laden
+        // 6. Doppelklick-Event für Tier-Liste registrieren (Detail-Ansicht öffnen)
+        lbTiere.DoubleClick += lbTiere_DoubleClick;
 
-                UpdateStatus("✅ Alle Daten geladen");
-            }
-            catch (Exception ex)
-            {
-                // Fehler anzeigen mit Details
-                MessageBox.Show($"Fehler beim Laden: {ex.Message}\n\nDetails: {ex.StackTrace}", "Fehler",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
+        // 7. Alle Tabs mit Daten befüllen
+        LoadFutterListe();
+        LoadNachbestellung();
+        LoadFutterplan();
+        LoadTagesbedarf();
+        LoadBestellungen();
+        LoadPfleger();  // Pfleger laden
+
+        UpdateStatus("✅ Alle Daten geladen");
+    }
+    catch (Exception ex)
+    {
+        MessageBox.Show($"Fehler beim Laden: {ex.Message}\n\nDetails: {ex.StackTrace}", "Fehler",
+            MessageBoxButtons.OK, MessageBoxIcon.Error);
+    }
+}
 
         // Tab wurde gewechselt - Daten neu laden
         private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
@@ -1377,9 +1387,9 @@ namespace ZooApp
                 // Name holen für Bestätigung
                 DataTable dt = db.Get("SELECT Vorname, Nachname FROM pfleger WHERE pflegerID = @id",
                     ("@id", currentPflegerId));
-                
+
                 if (dt.Rows.Count == 0) return;
-                
+
                 string name = $"{dt.Rows[0]["Vorname"]} {dt.Rows[0]["Nachname"]}";
 
                 if (MessageBox.Show($"Pfleger '{name}' wirklich löschen?", "Löschen bestätigen",
@@ -1405,6 +1415,230 @@ namespace ZooApp
         private void btnRefreshPfleger_Click(object sender, EventArgs e)
         {
             LoadPfleger();
+        }
+
+        #endregion
+
+        #region XML-Funktionen
+
+        // Erstellt XML-Export/Import Buttons unter der DataGridView
+        private void CreateXmlButtons()
+        {
+            try
+            {
+                // 1. Panel für die Buttons erstellen (für besseres Layout)
+                Panel buttonPanel = new Panel
+                {
+                    Height = 60,
+                    Dock = DockStyle.Bottom,  // Unten im Tab fixieren
+                    BackColor = Color.FromArgb(240, 240, 240),
+                    BorderStyle = BorderStyle.FixedSingle
+                };
+
+                // 2. Export-Button auf dem Panel
+                Button exportBtn = new Button
+                {
+                    Text = "📤 XML Export",
+                    Left = 20,
+                    Top = 10,
+                    Width = 140,
+                    Height = 40,
+                    BackColor = Color.FromArgb(52, 152, 219),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                    Cursor = Cursors.Hand,
+                    Name = "btnXmlExport"
+                };
+                exportBtn.FlatAppearance.BorderSize = 0;
+                exportBtn.Click += BtnXmlExport_Click;
+
+                // 3. Import-Button auf dem Panel
+                Button importBtn = new Button
+                {
+                    Text = "📥 XML Import",
+                    Left = 180,
+                    Top = 10,
+                    Width = 140,
+                    Height = 40,
+                    BackColor = Color.FromArgb(46, 204, 113),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                    Cursor = Cursors.Hand,
+                    Name = "btnXmlImport"
+                };
+                importBtn.FlatAppearance.BorderSize = 0;
+                importBtn.Click += BtnXmlImport_Click;
+
+                // 4. Buttons zum Panel hinzufügen
+                buttonPanel.Controls.Add(exportBtn);
+                buttonPanel.Controls.Add(importBtn);
+
+                // 5. Panel zum Übersicht-Tab hinzufügen
+                if (tabControl1.TabPages.Count > 4)  // Index 4 = Übersicht
+                {
+                    // DataGridView anpassen (höher, damit Platz für Panel bleibt)
+                    if (dgvUebersicht != null)
+                    {
+                        dgvUebersicht.Dock = DockStyle.Fill;  // Füllt den gesamten verfügbaren Platz
+                        dgvUebersicht.Height -= buttonPanel.Height;
+                    }
+
+                    // Panel zum Tab hinzufügen
+                    tabControl1.TabPages[4].Controls.Add(buttonPanel);
+                    buttonPanel.BringToFront();  // Immer sichtbar
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Fehler XML-Buttons: {ex.Message}");
+            }
+        }
+
+        // XML Export Funktion
+        private void BtnXmlExport_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (SaveFileDialog saveDialog = new SaveFileDialog())
+                {
+                    saveDialog.Filter = "XML-Dateien (*.xml)|*.xml|Alle Dateien (*.*)|*.*";
+                    saveDialog.FileName = $"Zoo_Tiere_{DateTime.Now:yyyy-MM-dd}.xml";
+                    saveDialog.Title = "Tierdaten exportieren";
+
+                    if (saveDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        string filePath = saveDialog.FileName;
+
+                        // Daten aus DB holen
+                        string sql = @"
+                            SELECT t.tierID, t.Name, t.Gewicht, t.Geschlecht, 
+                                   ta.TABezeichnung AS Tierart, g.GBezeichnung AS Gehege,
+                                   DATE_FORMAT(t.Geburtsdatum, '%Y-%m-%d') AS Geburtsdatum,
+                                   t.Notizen
+                            FROM tiere t
+                            LEFT JOIN Tierart ta ON t.TierartID = ta.tierartID
+                            LEFT JOIN Gehege g ON t.GehegeID = g.gID
+                            WHERE t.Status = 'Aktiv'";
+
+                        DataTable dt = db.Get(sql);
+
+                        // XML erstellen
+                        XmlDocument xmlDoc = new XmlDocument();
+                        XmlDeclaration xmlDecl = xmlDoc.CreateXmlDeclaration("1.0", "UTF-8", null);
+                        xmlDoc.AppendChild(xmlDecl);
+
+                        XmlElement root = xmlDoc.CreateElement("ZooTiere");
+                        root.SetAttribute("ExportDatum", DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
+                        root.SetAttribute("AnzahlTiere", dt.Rows.Count.ToString());
+                        xmlDoc.AppendChild(root);
+
+                        foreach (DataRow row in dt.Rows)
+                        {
+                            XmlElement tier = xmlDoc.CreateElement("Tier");
+
+                            AddXmlElement(xmlDoc, tier, "ID", row["tierID"]);
+                            AddXmlElement(xmlDoc, tier, "Name", row["Name"]);
+                            AddXmlElement(xmlDoc, tier, "Gewicht", row["Gewicht"], "kg");
+                            AddXmlElement(xmlDoc, tier, "Tierart", row["Tierart"]);
+                            AddXmlElement(xmlDoc, tier, "Gehege", row["Gehege"]);
+                            AddXmlElement(xmlDoc, tier, "Geschlecht", row["Geschlecht"]);
+                            AddXmlElement(xmlDoc, tier, "Geburtsdatum", row["Geburtsdatum"]);
+
+                            // Notizen als optionales Element
+                            if (!string.IsNullOrEmpty(row["Notizen"]?.ToString()))
+                            {
+                                AddXmlElement(xmlDoc, tier, "Notizen", row["Notizen"]);
+                            }
+
+                            root.AppendChild(tier);
+                        }
+
+                        // XML speichern
+                        xmlDoc.Save(filePath);
+
+                        MessageBox.Show($"✅ {dt.Rows.Count} aktive Tiere exportiert!\n\nDatei: {filePath}",
+                            "Export erfolgreich", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"❌ Export fehlgeschlagen:\n{ex.Message}",
+                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // XML Import Funktion
+        private void BtnXmlImport_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (OpenFileDialog openDialog = new OpenFileDialog())
+                {
+                    openDialog.Filter = "XML-Dateien (*.xml)|*.xml|Alle Dateien (*.*)|*.*";
+                    openDialog.Title = "Tierdaten importieren";
+
+                    if (openDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        string filePath = openDialog.FileName;
+
+                        if (MessageBox.Show("Möchten Sie Tierdaten aus der XML-Datei importieren?\n\n" +
+                                          "Hinweis: Diese Funktion importiert nur Daten, erstellt aber keine Tiere in der Datenbank.",
+                                          "Import bestätigen",
+                                          MessageBoxButtons.YesNo,
+                                          MessageBoxIcon.Question) == DialogResult.Yes)
+                        {
+                            // XML-Datei laden
+                            string xmlContent = File.ReadAllText(filePath);
+
+                            // Einfache Validierung
+                            if (xmlContent.Contains("ZooTiere") && xmlContent.Contains("Tier"))
+                            {
+                                // Zeige Vorschau
+                                int anzahlTiere = xmlContent.Split(new string[] { "<Tier>" }, StringSplitOptions.None).Length - 1;
+
+                                MessageBox.Show($"✅ XML-Datei geladen!\n\n" +
+                                              $"Enthält: {anzahlTiere} Tier-Datensätze\n" +
+                                              $"Datei: {Path.GetFileName(filePath)}\n\n" +
+                                              "Die Import-Funktion kann hier erweitert werden,\num tatsächlich Tiere in die Datenbank einzufügen.",
+                                              "Import erfolgreich",
+                                              MessageBoxButtons.OK,
+                                              MessageBoxIcon.Information);
+                            }
+                            else
+                            {
+                                MessageBox.Show("❌ Ungültiges XML-Format!\n\n" +
+                                              "Die Datei scheint keine gültigen Zoo-Tierdaten zu enthalten.",
+                                              "Import-Fehler",
+                                              MessageBoxButtons.OK,
+                                              MessageBoxIcon.Error);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"❌ Import fehlgeschlagen:\n{ex.Message}",
+                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Hilfsmethode für XML-Elemente
+        private void AddXmlElement(XmlDocument doc, XmlElement parent, string name, object value, string unit = null)
+        {
+            if (value != null && value != DBNull.Value && !string.IsNullOrEmpty(value.ToString()))
+            {
+                XmlElement elem = doc.CreateElement(name);
+                if (!string.IsNullOrEmpty(unit))
+                {
+                    elem.SetAttribute("Einheit", unit);
+                }
+                elem.InnerText = value.ToString();
+                parent.AppendChild(elem);
+            }
         }
 
         #endregion

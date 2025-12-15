@@ -1518,5 +1518,7 @@ namespace ZooApp
         private Button btnEditPfleger;
         private Button btnDelPfleger;
         private Button btnRefreshPfleger;
+        private Button btnXmlExport;
+        private Button btnXmlImport;
     }
 }

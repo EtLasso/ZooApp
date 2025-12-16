@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Xml;
 using System.IO;
+using System.Linq;
 
 namespace ZooApp
 {
@@ -24,8 +25,8 @@ namespace ZooApp
         private int currentFutterId = 0;
         private int currentFuelId = 0;
         private int currentGoldId = 0;
+        private int currentPflegerId = 0;
 
-        
         #endregion
 
         #region Initialisierung
@@ -64,70 +65,74 @@ namespace ZooApp
             // Button zum Fütterungsplan-Tab hinzufügen (mit Null-Check)
             // Tab-Index 7 = tabPage8 (Fütterungsplan)
             if (tabControl1?.TabPages != null && tabControl1.TabPages.Count > 7)
-            {                
+            {
                 tabControl1.TabPages[7].Controls.Add(btnFutterplanNeu);
-                
+
                 // FlatAppearance NACH dem Hinzufügen zum Container setzen
                 btnFutterplanNeu.FlatAppearance.BorderSize = 0;
             }
         }
 
         // Wird beim Laden des Formulars aufgerufen (nach dem Anzeigen)
-        // Wird beim Laden des Formulars aufgerufen (nach dem Anzeigen)
         private void Form1_Load(object sender, EventArgs e)
-{
-    // 1. Datenbankverbindung testen
-    if (!db.Test())
-    {                
-        MessageBox.Show("❌ Keine Verbindung zur Datenbank!\n\nBitte XAMPP starten und MySQL läuft.",
-            "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        UpdateStatus("❌ Datenbank nicht verbunden");
-        return;
-    }
+        {
+            // 1. Datenbankverbindung testen
+            if (!db.Test())
+            {
+                MessageBox.Show("❌ Keine Verbindung zur Datenbank!\n\nBitte XAMPP starten und MySQL läuft.",
+                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UpdateStatus("❌ Datenbank nicht verbunden");
+                return;
+            }
 
-    UpdateStatus("✅ Verbunden mit Datenbank");
+            UpdateStatus("✅ Verbunden mit Datenbank");
 
-    try
-    {
-        // 2. Stammdaten laden (Kontinente, Gehege, Tierarten, Tiere)
-        LoadKontinente();
-        LoadGehege();
-        LoadTierarten();
-        LoadTiere();
-        
-        // 3. ComboBoxen füllen
-        LoadKontinentComboBox();
-        LoadTierartComboBox();
-        LoadGehegeComboBox();
-        LoadTierartComboBoxFutterplan();
-        
-        // 4. Übersicht und Eingabefelder initialisieren
-        LoadUebersicht();
-        ClearFutterFields();
+            try
+            {
+                // 2. Stammdaten laden (Kontinente, Gehege, Tierarten, Tiere)
+                LoadKontinente();
+                LoadGehege();
+                LoadTierarten();
+                LoadTiere();
 
-        // 5. Dynamische Buttons erstellen (NACH Daten geladen)
-        AddFutterplanButton();
-        CreateXmlButtons();  // NEU: XML-Buttons hinzufügen
+                // 3. ComboBoxen füllen
+                LoadKontinentComboBox();
+                LoadTierartComboBox();
+                LoadGehegeComboBox();
+                LoadTierartComboBoxFutterplan();
 
-        // 6. Doppelklick-Event für Tier-Liste registrieren (Detail-Ansicht öffnen)
-        lbTiere.DoubleClick += lbTiere_DoubleClick;
+                // 4. Übersicht und Eingabefelder initialisieren
+                LoadUebersicht();
+                ClearFutterFields();
 
-        // 7. Alle Tabs mit Daten befüllen
-        LoadFutterListe();
-        LoadNachbestellung();
-        LoadFutterplan();
-        LoadTagesbedarf();
-        LoadBestellungen();
-        LoadPfleger();  // Pfleger laden
+                // 5. Dynamische Buttons erstellen (NACH Daten geladen)
+                AddFutterplanButton();
+                CreateXmlButtons();  // NEU: XML-Buttons hinzufügen
 
-        UpdateStatus("✅ Alle Daten geladen");
-    }
-    catch (Exception ex)
-    {
-        MessageBox.Show($"Fehler beim Laden: {ex.Message}\n\nDetails: {ex.StackTrace}", "Fehler",
-            MessageBoxButtons.OK, MessageBoxIcon.Error);
-    }
-}
+                // 6. Doppelklick-Events registrieren
+                lbTiere.DoubleClick += lbTiere_DoubleClick;
+                dgvUebersicht.CellDoubleClick += dgvUebersicht_CellDoubleClick;
+                dgvFutter.CellDoubleClick += dgvFutter_CellDoubleClick; // NEU: Für Futter-Details
+
+                // 7. Rechtsklick-Kontextmenüs erstellen
+                CreateContextMenus();
+
+                // 8. Alle Tabs mit Daten befüllen
+                LoadFutterListe();
+                LoadNachbestellung();
+                LoadFutterplan();
+                LoadTagesbedarf();
+                LoadBestellungen();
+                LoadPfleger();  // Pfleger laden
+
+                UpdateStatus("✅ Alle Daten geladen");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler beim Laden: {ex.Message}\n\nDetails: {ex.StackTrace}", "Fehler",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
 
         // Tab wurde gewechselt - Daten neu laden
         private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
@@ -191,6 +196,331 @@ namespace ZooApp
             box.DisplayMember = "Text";
             box.ValueMember = "Value";
         }
+
+        // Erstellt Rechtsklick-Kontextmenüs für DataGridViews
+        private void CreateContextMenus()
+        {
+            // Kontextmenü für Übersicht (Tiere)
+            ContextMenuStrip menuUebersicht = new ContextMenuStrip();
+            menuUebersicht.Items.Add("Details anzeigen", null, (s, e) => {
+                if (dgvUebersicht.SelectedRows.Count > 0)
+                    OpenTierDetailFromGrid();
+            });
+            menuUebersicht.Items.Add("-"); // Trennlinie
+            menuUebersicht.Items.Add("Exportieren als XML", null, (s, e) => {
+                BtnXmlExport_Click(null, null);
+            });
+            menuUebersicht.Items.Add("Auswahl kopieren", null, (s, e) => {
+                CopySelectedGridData(dgvUebersicht);
+            });
+            dgvUebersicht.ContextMenuStrip = menuUebersicht;
+
+            // Kontextmenü für Futterliste
+            ContextMenuStrip menuFutter = new ContextMenuStrip();
+            menuFutter.Items.Add("Details anzeigen", null, (s, e) => {
+                if (dgvFutter.SelectedRows.Count > 0)
+                    OpenFutterDetailFromGrid();
+            });
+            menuFutter.Items.Add("Schnellbestellung", null, (s, e) => {
+                OpenSchnellBestellung();
+            });
+            menuFutter.Items.Add("-"); // Trennlinie
+            menuFutter.Items.Add("Bearbeiten", null, (s, e) => {
+                EditSelectedFutter();
+            });
+            menuFutter.Items.Add("Löschen", null, (s, e) => {
+                DeleteSelectedFutter();
+            });
+            menuFutter.Items.Add("-"); // Trennlinie
+            menuFutter.Items.Add("Nach oben", null, (s, e) => {
+                MoveGridSelection(dgvFutter, -1);
+            });
+            menuFutter.Items.Add("Nach unten", null, (s, e) => {
+                MoveGridSelection(dgvFutter, 1);
+            });
+            dgvFutter.ContextMenuStrip = menuFutter;
+
+            // Kontextmenü für Nachbestellung
+            ContextMenuStrip menuNachbestellung = new ContextMenuStrip();
+            menuNachbestellung.Items.Add("Details der Futtersorte", null, (s, e) => {
+                if (dgvNachbestellung.SelectedRows.Count > 0)
+                    OpenFutterDetailFromNachbestellung();
+            });
+            menuNachbestellung.Items.Add("Bestellung erstellen", null, (s, e) => {
+                CreateBestellungFromNachbestellung();
+            });
+            menuNachbestellung.Items.Add("-"); // Trennlinie
+            menuNachbestellung.Items.Add("Als erledigt markieren", null, (s, e) => {
+                MarkNachbestellungAsDone();
+            });
+            dgvNachbestellung.ContextMenuStrip = menuNachbestellung;
+
+            // Kontextmenü für Bestellungen
+            ContextMenuStrip menuBestellungen = new ContextMenuStrip();
+            menuBestellungen.Items.Add("Details anzeigen", null, (s, e) => {
+                ShowBestellungDetails();
+            });
+            menuBestellungen.Items.Add("Als geliefert markieren", null, (s, e) => {
+                MarkAsDelivered();
+            });
+            menuBestellungen.Items.Add("Stornieren", null, (s, e) => {
+                CancelBestellung();
+            });
+            dgvBestellungen.ContextMenuStrip = menuBestellungen;
+
+            // Kontextmenü für Pfleger-ListBox
+            ContextMenuStrip menuPfleger = new ContextMenuStrip();
+            menuPfleger.Items.Add("Details anzeigen", null, (s, e) => {
+                if (lbPfleger.SelectedItem != null)
+                    OpenPflegerDetailFromList();
+            });
+            menuPfleger.Items.Add("Neuer Pfleger", null, (s, e) => {
+                btnNewPfleger_Click(null, null);
+            });
+            menuPfleger.Items.Add("Bearbeiten", null, (s, e) => {
+                btnEditPfleger_Click(null, null);
+            });
+            menuPfleger.Items.Add("Löschen", null, (s, e) => {
+                btnDelPfleger_Click(null, null);
+            });
+            lbPfleger.ContextMenuStrip = menuPfleger;
+        }
+
+        #region Kontextmenü-Helfer
+        private void OpenTierDetailFromGrid()
+        {
+            try
+            {
+                int tierID = Convert.ToInt32(dgvUebersicht.SelectedRows[0].Cells["ID"].Value);
+                TierDetailForm detailForm = new TierDetailForm(tierID);
+                detailForm.ShowDialog();
+                LoadUebersicht();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void OpenFutterDetailFromGrid()
+        {
+            try
+            {
+                int futterID = Convert.ToInt32(dgvFutter.SelectedRows[0].Cells["futterID"].Value);
+                FutterDetailForm detailForm = new FutterDetailForm(futterID);
+                detailForm.ShowDialog();
+                LoadFutterListe();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void OpenFutterDetailFromNachbestellung()
+        {
+            try
+            {
+                if (dgvNachbestellung.SelectedRows.Count > 0)
+                {
+                    var row = dgvNachbestellung.SelectedRows[0];
+                    // Annahme: Spalte 'futterID' existiert oder wir parsen den Namen
+                    string futterName = row.Cells["Futtersorte"].Value.ToString();
+
+                    // Futter-ID aus Name holen
+                    DataTable dt = db.Get("SELECT futterID FROM futter WHERE Bezeichnung = @name",
+                        ("@name", futterName));
+
+                    if (dt.Rows.Count > 0)
+                    {
+                        int futterID = Convert.ToInt32(dt.Rows[0]["futterID"]);
+                        FutterDetailForm detailForm = new FutterDetailForm(futterID);
+                        detailForm.ShowDialog();
+                        LoadNachbestellung();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void CopySelectedGridData(DataGridView grid)
+        {
+            if (grid.SelectedCells.Count > 0)
+            {
+                string data = "";
+                foreach (DataGridViewCell cell in grid.SelectedCells)
+                {
+                    if (cell.Value != null)
+                        data += cell.Value.ToString() + "\t";
+                }
+                Clipboard.SetText(data);
+                UpdateStatus("✅ Daten kopiert");
+            }
+        }
+
+        private void MoveGridSelection(DataGridView grid, int direction)
+        {
+            if (grid.SelectedRows.Count > 0 && direction != 0)
+            {
+                int newIndex = grid.SelectedRows[0].Index + direction;
+                if (newIndex >= 0 && newIndex < grid.Rows.Count)
+                {
+                    grid.ClearSelection();
+                    grid.Rows[newIndex].Selected = true;
+                    grid.FirstDisplayedScrollingRowIndex = newIndex;
+                }
+            }
+        }
+
+        private void OpenSchnellBestellung()
+        {
+            if (dgvFutter.SelectedRows.Count == 0) return;
+
+            var row = dgvFutter.SelectedRows[0];
+            string bezeichnung = row.Cells["Bezeichnung"].Value.ToString();
+            decimal preis = Convert.ToDecimal(row.Cells["Preis_pro_Einheit"].Value);
+            string einheit = row.Cells["Einheit"].Value.ToString();
+            decimal bestellmenge = Convert.ToDecimal(row.Cells["Bestellmenge"].Value);
+
+            using (var dialog = new Form
+            {
+                Text = "🛒 Schnellbestellung",
+                Size = new Size(400, 250),
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog
+            })
+            {
+                Label lbl = new Label { Text = $"Bestellung für:\n{bezeichnung}", Left = 20, Top = 20, AutoSize = true };
+                NumericUpDown num = new NumericUpDown
+                {
+                    Left = 20,
+                    Top = 70,
+                    Width = 150,
+                    Minimum = 1,
+                    Maximum = 10000,
+                    Value = bestellmenge
+                };
+                Label lblSumme = new Label { Text = $"Summe: {(bestellmenge * preis):C2}", Left = 20, Top = 110, AutoSize = true };
+
+                num.ValueChanged += (s, e) =>
+                    lblSumme.Text = $"Summe: {(num.Value * preis):C2}";
+
+                Button btnOk = new Button { Text = "✅ Bestellen", Left = 20, Top = 160, Width = 150, DialogResult = DialogResult.OK };
+                Button btnCancel = new Button { Text = "❌ Abbrechen", Left = 180, Top = 160, Width = 150, DialogResult = DialogResult.Cancel };
+
+                dialog.Controls.AddRange(new Control[] { lbl, num, lblSumme, btnOk, btnCancel });
+
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    decimal menge = num.Value;
+                    // Hier könnte die Bestellung in DB gespeichert werden
+                    MessageBox.Show($"Bestellung für {menge} {einheit} {bezeichnung} aufgegeben!",
+                        "Bestellung", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+        }
+
+        private void EditSelectedFutter()
+        {
+            if (dgvFutter.SelectedRows.Count > 0)
+            {
+                // Futter in die Eingabefelder laden
+                var row = dgvFutter.SelectedRows[0];
+                currentFutterId = Convert.ToInt32(row.Cells["futterID"].Value);
+                txtFutterBezeichnung.Text = row.Cells["Bezeichnung"].Value.ToString();
+                txtFutterEinheit.Text = row.Cells["Einheit"].Value.ToString();
+                numFutterPreis.Value = Convert.ToDecimal(row.Cells["Preis_pro_Einheit"].Value);
+                numFutterLagerbestand.Value = Convert.ToInt32(row.Cells["Lagerbestand"].Value);
+                numFutterMindestbestand.Value = Convert.ToInt32(row.Cells["Mindestbestand"].Value);
+                numFutterBestellmenge.Value = Convert.ToInt32(row.Cells["Bestellmenge"].Value);
+
+                UpdateStatus($"Futter '{txtFutterBezeichnung.Text}' zum Bearbeiten geladen");
+            }
+        }
+
+        private void DeleteSelectedFutter()
+        {
+            if (dgvFutter.SelectedRows.Count > 0)
+            {
+                string name = dgvFutter.SelectedRows[0].Cells["Bezeichnung"].Value.ToString();
+                if (MessageBox.Show($"Futtersorte '{name}' wirklich löschen?", "Löschen bestätigen",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    btnFutterLöschen_Click(null, null);
+                }
+            }
+        }
+
+        private void CreateBestellungFromNachbestellung()
+        {
+            if (dgvNachbestellung.SelectedRows.Count > 0)
+            {
+                var row = dgvNachbestellung.SelectedRows[0];
+                string futterName = row.Cells["Futtersorte"].Value.ToString();
+                decimal fehlendeMenge = Convert.ToDecimal(row.Cells["Fehlende_Menge"].Value);
+
+                MessageBox.Show($"Bestellung für {fehlendeMenge} {futterName} würde jetzt erstellt.\n\n(Funktion kann erweitert werden)",
+                    "Bestellung", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void MarkNachbestellungAsDone()
+        {
+            if (dgvNachbestellung.SelectedRows.Count > 0)
+            {
+                // Hier könnte der Bestand manuell erhöht werden
+                UpdateStatus("Nachbestellung als erledigt markiert (Demo)");
+            }
+        }
+
+        private void ShowBestellungDetails()
+        {
+            if (dgvBestellungen.SelectedRows.Count > 0)
+            {
+                var row = dgvBestellungen.SelectedRows[0];
+                string details = "";
+                foreach (DataGridViewCell cell in row.Cells)
+                {
+                    if (cell.Value != null)
+                        details += $"{dgvBestellungen.Columns[cell.ColumnIndex].HeaderText}: {cell.Value}\n";
+                }
+                MessageBox.Show(details, "Bestellungsdetails", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void MarkAsDelivered()
+        {
+            if (dgvBestellungen.SelectedRows.Count > 0)
+            {
+                if (MessageBox.Show("Bestellung als geliefert markieren?", "Bestätigen",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    UpdateStatus("Bestellung als geliefert markiert (Demo)");
+                }
+            }
+        }
+
+        private void CancelBestellung()
+        {
+            if (dgvBestellungen.SelectedRows.Count > 0)
+            {
+                if (MessageBox.Show("Bestellung wirklich stornieren?", "Bestätigen",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                {
+                    UpdateStatus("Bestellung storniert (Demo)");
+                }
+            }
+        }
+
+        private void OpenPflegerDetailFromList()
+        {
+            if (lbPfleger.SelectedItem != null)
+                lbPfleger_DoubleClick(null, null);
+        }
+        #endregion
 
         #endregion
 
@@ -544,7 +874,7 @@ namespace ZooApp
             // Prüfen ob ein Tier ausgewählt ist
             if (lbTiere.SelectedItem == null)
             {
-                MessageBox.Show("Bitte wähle zuerst ein Tier aus.", "Hinweis", 
+                MessageBox.Show("Bitte wähle zuerst ein Tier aus.", "Hinweis",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -553,18 +883,18 @@ namespace ZooApp
             {
                 // TierID aus dem ausgewählten Eintrag extrahieren
                 int tierID = int.Parse(lbTiere.SelectedItem.ToString().Split('-')[0].Trim());
-                
+
                 // Detail-Fenster öffnen
                 TierDetailForm detailForm = new TierDetailForm(tierID);
                 detailForm.ShowDialog();
-                
+
                 // Nach dem Schließen die Listen neu laden
                 LoadTiere();
                 LoadUebersicht();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fehler beim Öffnen des Detail-Fensters:\n{ex.Message}", 
+                MessageBox.Show($"Fehler beim Öffnen des Detail-Fensters:\n{ex.Message}",
                     "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -614,23 +944,23 @@ namespace ZooApp
                     ORDER BY t.Name";
 
                 Console.WriteLine("LoadUebersicht: Starte DB-Abfrage...");
-                
+
                 // Daten aus Datenbank laden
                 DataTable dt = db.Get(sql);
                 Console.WriteLine($"LoadUebersicht: {dt.Rows.Count} Zeilen geladen");
-                
+
                 // Event-Handler VORHER entfernen (verhindert Events während des Ladens)
                 dgvUebersicht.CellDoubleClick -= dgvUebersicht_CellDoubleClick;
-                
+
                 // Layout-Updates während der Aktualisierung suspendieren (Performance + Stabilität)
                 dgvUebersicht.SuspendLayout();
-                
+
                 try
                 {
                     // DataGridView mit Daten füllen
                     dgvUebersicht.DataSource = dt;
                     Console.WriteLine("LoadUebersicht: DataSource gesetzt");
-                    
+
                     // AutoSizeColumnsMode setzen
                     // WICHTIG: Bei Fill-Modus sollte Width NICHT manuell gesetzt werden!
                     dgvUebersicht.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
@@ -651,12 +981,12 @@ namespace ZooApp
                 if (dgvUebersicht.Columns != null && dgvUebersicht.Columns.Count > 0)
                 {
                     Console.WriteLine($"LoadUebersicht: {dgvUebersicht.Columns.Count} Spalten vorhanden");
-                    
+
                     if (dgvUebersicht.Columns.Contains("ID"))
                     {
                         // Spalte existiert und ist vollständig initialisiert
                         var idColumn = dgvUebersicht.Columns["ID"];
-                        
+
                         if (idColumn != null)
                         {
                             // WICHTIG: Bei AutoSizeColumnsMode.Fill keine Width setzen!
@@ -670,7 +1000,7 @@ namespace ZooApp
                     {
                         Console.WriteLine("WARNUNG: ID-Spalte nicht gefunden!");
                     }
-                    
+
                     // Optional: Andere Spalten auch mit FillWeight konfigurieren
                     if (dgvUebersicht.Columns.Contains("Name"))
                     {
@@ -706,17 +1036,17 @@ namespace ZooApp
                                      $"Message: {ex.Message}\n" +
                                      $"Source: {ex.Source}\n" +
                                      $"StackTrace:\n{ex.StackTrace}";
-                
+
                 if (ex.InnerException != null)
                 {
                     errorMessage += $"\n\nInner Exception:\n{ex.InnerException.Message}";
                 }
-                
+
                 Console.WriteLine($"FEHLER: {errorMessage}");
-                
-                MessageBox.Show($"Fehler beim Laden der Übersicht:\n\n{ex.Message}", 
+
+                MessageBox.Show($"Fehler beim Laden der Übersicht:\n\n{ex.Message}",
                     "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                
+
                 // UpdateStatus nur aufrufen wenn lblStatus existiert
                 try
                 {
@@ -736,7 +1066,7 @@ namespace ZooApp
         private void dgvUebersicht_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             Console.WriteLine($"CellDoubleClick: Ereignis ausgelöst für Zeile {e.RowIndex}, Spalte {e.ColumnIndex}");
-            
+
             // Prüfen ob eine gültige Zeile angeklickt wurde (nicht Header)
             if (e.RowIndex < 0)
             {
@@ -747,34 +1077,34 @@ namespace ZooApp
             try
             {
                 Console.WriteLine("CellDoubleClick: Prüfe Columns...");
-                
+
                 // Prüfen ob Columns-Collection existiert
                 if (dgvUebersicht.Columns == null)
                 {
-                    MessageBox.Show("Fehler: Keine Spalten vorhanden!", "Fehler", 
+                    MessageBox.Show("Fehler: Keine Spalten vorhanden!", "Fehler",
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Console.WriteLine("FEHLER: dgvUebersicht.Columns ist null!");
                     return;
                 }
-                
+
                 // Prüfen ob ID-Spalte existiert
                 if (!dgvUebersicht.Columns.Contains("ID"))
                 {
-                    MessageBox.Show("Fehler: ID-Spalte nicht gefunden!", "Fehler", 
+                    MessageBox.Show("Fehler: ID-Spalte nicht gefunden!", "Fehler",
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Console.WriteLine("FEHLER: ID-Spalte existiert nicht!");
                     return;
                 }
-                
+
                 Console.WriteLine("CellDoubleClick: Hole Zellenwert...");
 
                 // Zellenwert holen
                 var cellValue = dgvUebersicht.Rows[e.RowIndex].Cells["ID"].Value;
-                
+
                 // Prüfen ob Wert vorhanden
                 if (cellValue == null || cellValue == DBNull.Value)
                 {
-                    MessageBox.Show("Fehler: Keine Tier-ID gefunden!", "Fehler", 
+                    MessageBox.Show("Fehler: Keine Tier-ID gefunden!", "Fehler",
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Console.WriteLine($"FEHLER: Zellenwert ist null oder DBNull bei Zeile {e.RowIndex}");
                     return;
@@ -783,17 +1113,17 @@ namespace ZooApp
                 // TierID extrahieren
                 int tierID = Convert.ToInt32(cellValue);
                 Console.WriteLine($"CellDoubleClick: Öffne Detail-Fenster für TierID {tierID}");
-                
+
                 // Detail-Fenster öffnen
                 TierDetailForm detailForm = new TierDetailForm(tierID);
                 detailForm.ShowDialog();
-                
+
                 Console.WriteLine("CellDoubleClick: Detail-Fenster geschlossen, lade Daten neu...");
 
                 // Daten nach dem Schließen neu laden
                 LoadUebersicht();
                 LoadTiere();
-                
+
                 Console.WriteLine("CellDoubleClick: Erfolgreich abgeschlossen");
             }
             catch (Exception ex)
@@ -803,15 +1133,15 @@ namespace ZooApp
                                      $"Message: {ex.Message}\n" +
                                      $"Source: {ex.Source}\n" +
                                      $"StackTrace:\n{ex.StackTrace}";
-                
+
                 if (ex.InnerException != null)
                 {
                     errorMessage += $"\n\nInner Exception:\n{ex.InnerException.Message}";
                 }
-                
+
                 Console.WriteLine($"FEHLER: {errorMessage}");
-                
-                MessageBox.Show($"Fehler beim Öffnen des Detail-Fensters:\n\n{ex.Message}", 
+
+                MessageBox.Show($"Fehler beim Öffnen des Detail-Fensters:\n\n{ex.Message}",
                     "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -890,6 +1220,56 @@ namespace ZooApp
             catch (Exception ex)
             {
                 MessageBox.Show($"Fehler: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Doppelklick auf Futtersorte öffnet Detail-Ansicht
+        private void dgvFutter_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            Console.WriteLine($"Futter-Doppelklick: Zeile {e.RowIndex}, Spalte {e.ColumnIndex}");
+
+            // Prüfen ob Header oder ungültige Zeile angeklickt
+            if (e.RowIndex < 0)
+            {
+                Console.WriteLine("Futter-Doppelklick: Header-Zeile - ignoriere");
+                return;
+            }
+
+            try
+            {
+
+                // ID aus der ausgewählten Zeile holen
+                var row = dgvFutter.Rows[e.RowIndex];
+                var cellValue = row.Cells["futterID"].Value;
+
+                if (cellValue == null || cellValue == DBNull.Value)
+                {
+                    MessageBox.Show("Keine gültige Futtersorte ausgewählt!",
+                                  "Hinweis", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // ID parsen
+                int futterID = Convert.ToInt32(cellValue);
+                Console.WriteLine($"Öffne Futter-Detail für ID: {futterID}");
+
+                // Detail-Fenster öffnen (Modal = Dialog)
+                FutterDetailForm detailForm = new FutterDetailForm(futterID);
+                DialogResult result = detailForm.ShowDialog(this); // 'this' = Hauptform als Owner
+
+                // Nach dem Schließen Daten NEU laden
+                if (result == DialogResult.OK || result == DialogResult.Cancel)
+                {
+                    LoadFutterListe();
+                    LoadNachbestellung(); // Wichtig: Nachbestell-Liste aktualisieren
+                    UpdateStatus($"✅ Futter-Details geschlossen - Daten aktualisiert");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler beim Öffnen der Futter-Details:\n{ex.Message}",
+                               "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Console.WriteLine($"FEHLER Futter-Doppelklick: {ex.Message}\n{ex.StackTrace}");
             }
         }
 
@@ -974,6 +1354,33 @@ namespace ZooApp
                 numFutterLagerbestand.Value = Convert.ToInt32(row.Cells["Lagerbestand"].Value);
                 numFutterMindestbestand.Value = Convert.ToInt32(row.Cells["Mindestbestand"].Value);
                 numFutterBestellmenge.Value = Convert.ToInt32(row.Cells["Bestellmenge"].Value);
+            }
+        }
+
+        // Button-Click-Handler für manuelle Detail-Ansicht
+        private void BtnFutterDetails_Click(object sender, EventArgs e)
+        {
+            if (dgvFutter.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Bitte wähle zuerst eine Futtersorte aus!", "Hinweis",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            try
+            {
+                int futterID = Convert.ToInt32(dgvFutter.SelectedRows[0].Cells["futterID"].Value);
+                FutterDetailForm detailForm = new FutterDetailForm(futterID);
+                detailForm.ShowDialog();
+
+                // Nach dem Schließen neu laden
+                LoadFutterListe();
+                LoadNachbestellung();
+                UpdateStatus("✅ Futter-Details geschlossen");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -1236,28 +1643,32 @@ namespace ZooApp
 
         #region PFLEGER
 
-        private int currentPflegerId = 0;
-
         /// <summary>
-        /// Lädt alle Pfleger in die ListBox
+        /// Lädt alle Pfleger aus der Datenbank in die ListBox
+        /// Zeigt: ID, Name, Gehalt und Einstellungsdatum
         /// </summary>
         private void LoadPfleger()
         {
             try
             {
+                // SQL: Alle Pfleger sortiert nach Nachname, Vorname
                 DataTable dt = db.Get(@"
                     SELECT pflegerID, Vorname, Nachname, Gehalt, Einstellungsdatum
                     FROM pfleger
                     ORDER BY Nachname, Vorname");
 
+                // ListBox leeren
                 lbPfleger.Items.Clear();
+                
+                // Jeden Pfleger als Eintrag hinzufügen
                 foreach (DataRow row in dt.Rows)
                 {
                     string eintrag = $"{row["pflegerID"]} - {row["Nachname"]}, {row["Vorname"]} " +
                                    $"(Gehalt: {Convert.ToDecimal(row["Gehalt"]):C}, seit {Convert.ToDateTime(row["Einstellungsdatum"]):dd.MM.yyyy})";
                     lbPfleger.Items.Add(eintrag);
                 }
-                
+
+                // Statusleiste aktualisieren
                 UpdateStatus($"✅ {dt.Rows.Count} Pfleger geladen");
             }
             catch (Exception ex)
@@ -1268,14 +1679,16 @@ namespace ZooApp
         }
 
         /// <summary>
-        /// Pfleger wurde in ListBox ausgewählt
+        /// Wird aufgerufen, wenn ein Pfleger in der ListBox ausgewählt wird
+        /// Speichert die aktuelle Pfleger-ID
         /// </summary>
         private void lbPfleger_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lbPfleger.SelectedItem == null) return;
-            
+
             try
             {
+                // ID aus dem String extrahieren (Format: "37 - Müller, Hans...")
                 currentPflegerId = int.Parse(lbPfleger.SelectedItem.ToString().Split('-')[0].Trim());
             }
             catch
@@ -1285,7 +1698,8 @@ namespace ZooApp
         }
 
         /// <summary>
-        /// Doppelklick öffnet Detail-Fenster
+        /// Doppelklick auf einen Pfleger öffnet das Detail-Fenster
+        /// Erlaubt schnelle Bearbeitung ohne extra Button
         /// </summary>
         private void lbPfleger_DoubleClick(object sender, EventArgs e)
         {
@@ -1298,10 +1712,15 @@ namespace ZooApp
 
             try
             {
+                // ID aus dem String extrahieren
                 int pflegerID = int.Parse(lbPfleger.SelectedItem.ToString().Split('-')[0].Trim());
+                
+                // Detail-Fenster öffnen
                 PflegerDetailForm detailForm = new PflegerDetailForm(pflegerID);
                 detailForm.ShowDialog();
-                LoadPfleger(); // Neu laden nach Änderungen
+                
+                // Liste nach Änderungen neu laden
+                LoadPfleger();
             }
             catch (Exception ex)
             {
@@ -1311,30 +1730,32 @@ namespace ZooApp
         }
 
         /// <summary>
-        /// Neuen Pfleger erstellen
+        /// Button "Neu" - Erstellt einen neuen Pfleger
+        /// Fügt Dummy-Eintrag ein und öffnet Detail-Fenster zum Bearbeiten
         /// </summary>
         private void btnNewPfleger_Click(object sender, EventArgs e)
         {
             try
             {
-                // Neuen Pfleger in DB einfügen
+                // Neuen Pfleger mit Standardwerten in DB einfügen
                 db.Execute(@"
                     INSERT INTO pfleger (Vorname, Nachname, Einstellungsdatum, Gehalt)
                     VALUES ('Neuer', 'Pfleger', CURDATE(), 2500.00)");
 
-                // ID des neu erstellten Pflegers holen
+                // ID des neu erstellten Pflegers holen (LAST_INSERT_ID)
                 DataTable dt = db.Get("SELECT LAST_INSERT_ID() as id");
                 int neueID = Convert.ToInt32(dt.Rows[0]["id"]);
 
-                // Detail-Fenster öffnen
+                // Detail-Fenster öffnen zum Bearbeiten
                 PflegerDetailForm detailForm = new PflegerDetailForm(neueID);
                 if (detailForm.ShowDialog() == DialogResult.OK)
                 {
+                    // Bei OK: Liste neu laden
                     LoadPfleger();
                 }
                 else
                 {
-                    // Falls abgebrochen, leeren Eintrag löschen
+                    // Bei Abbruch: Leeren Eintrag wieder löschen
                     db.Execute("DELETE FROM pfleger WHERE pflegerID = @id", ("@id", neueID));
                 }
             }
@@ -1346,10 +1767,12 @@ namespace ZooApp
         }
 
         /// <summary>
-        /// Pfleger bearbeiten
+        /// Button "Bearbeiten" - Öffnet Detail-Fenster für ausgewählten Pfleger
+        /// Prüft zuerst, ob ein Pfleger ausgewählt ist
         /// </summary>
         private void btnEditPfleger_Click(object sender, EventArgs e)
         {
+            // Prüfen ob Pfleger ausgewählt
             if (currentPflegerId == 0)
             {
                 MessageBox.Show("Bitte zuerst einen Pfleger auswählen!", "Hinweis",
@@ -1359,8 +1782,11 @@ namespace ZooApp
 
             try
             {
+                // Detail-Fenster öffnen
                 PflegerDetailForm detailForm = new PflegerDetailForm(currentPflegerId);
                 detailForm.ShowDialog();
+                
+                // Liste nach Änderungen neu laden
                 LoadPfleger();
             }
             catch (Exception ex)
@@ -1371,10 +1797,12 @@ namespace ZooApp
         }
 
         /// <summary>
-        /// Pfleger löschen
+        /// Button "Löschen" - Löscht ausgewählten Pfleger
+        /// Fragt vorher zur Sicherheit nach Bestätigung
         /// </summary>
         private void btnDelPfleger_Click(object sender, EventArgs e)
         {
+            // Prüfen ob Pfleger ausgewählt
             if (currentPflegerId == 0)
             {
                 MessageBox.Show("Bitte zuerst einen Pfleger auswählen!", "Hinweis",
@@ -1384,7 +1812,7 @@ namespace ZooApp
 
             try
             {
-                // Name holen für Bestätigung
+                // Name des Pflegers für Bestätigung holen
                 DataTable dt = db.Get("SELECT Vorname, Nachname FROM pfleger WHERE pflegerID = @id",
                     ("@id", currentPflegerId));
 
@@ -1392,12 +1820,17 @@ namespace ZooApp
 
                 string name = $"{dt.Rows[0]["Vorname"]} {dt.Rows[0]["Nachname"]}";
 
+                // Sicherheitsabfrage vor dem Löschen
                 if (MessageBox.Show($"Pfleger '{name}' wirklich löschen?", "Löschen bestätigen",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
+                    // Aus Datenbank löschen
                     db.Execute("DELETE FROM pfleger WHERE pflegerID = @id", ("@id", currentPflegerId));
+                    
+                    // Liste neu laden
                     LoadPfleger();
                     currentPflegerId = 0;
+                    
                     MessageBox.Show("✅ Pfleger gelöscht!", "Erfolg",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
@@ -1410,7 +1843,8 @@ namespace ZooApp
         }
 
         /// <summary>
-        /// Pfleger-Liste neu laden
+        /// Button "Aktualisieren" - Lädt Pfleger-Liste neu
+        /// Nützlich wenn andere Benutzer Änderungen vorgenommen haben
         /// </summary>
         private void btnRefreshPfleger_Click(object sender, EventArgs e)
         {

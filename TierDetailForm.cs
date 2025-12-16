@@ -203,9 +203,9 @@ namespace ZooApp
             Label lblIDIcon = new Label
             {
                 Text = "🆔",
-                Font = new Font("Segoe UI", 36F),  // Etwas kleiner von 40F auf 36F
+                Font = new Font("Segoe UI", 30F),  // Etwas kleiner von 40F auf 36F
                 AutoSize = true,
-                Location = new Point(10, 28),
+                Location = new Point(10, 20),
                 BackColor = Color.Transparent
             };
             panelID.Controls.Add(lblIDIcon);
@@ -225,10 +225,10 @@ namespace ZooApp
             lblIDNummer = new Label
             {
                 Text = "#00000",
-                Font = new Font("Segoe UI", 28F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 24F, FontStyle.Bold),
                 ForeColor = Color.FromArgb(52, 73, 94),
                 AutoSize = true,
-                Location = new Point(100, 48),  // Von 85 auf 100 verschoben!
+                Location = new Point(130, 40),  // Von 85 auf 100 verschoben!
                 BackColor = Color.Transparent
             };
             panelID.Controls.Add(lblIDNummer);

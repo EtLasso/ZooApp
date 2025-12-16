@@ -41,7 +41,9 @@ namespace ZooApp
         private DataGridView dgvTierarten;
         private DataGridView dgvAnbieter;
         private Button btnNeuerAnbieter, btnBestellen;
-        
+
+        private Label lblFutterBezeichnung;
+
         // Buttons
         private Button btnSpeichern, btnSchliessen;
 
@@ -66,23 +68,61 @@ namespace ZooApp
             this.BackColor = Color.FromArgb(236, 240, 241);
 
             // Header
-            Panel header = new Panel { Dock = DockStyle.Top, Height = 80 };
+            Panel header = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 80
+            };
+
             header.Paint += (s, e) =>
             {
-                using (var brush = new LinearGradientBrush(header.ClientRectangle,
-                    Color.FromArgb(26, 188, 156), Color.FromArgb(22, 160, 133), 0f))
+                using (var brush = new LinearGradientBrush(
+                    header.ClientRectangle,
+                    Color.FromArgb(26, 188, 156),
+                    Color.FromArgb(22, 160, 133),
+                    0f))
+                {
                     e.Graphics.FillRectangle(brush, header.ClientRectangle);
+                }
             };
+
+            // 🪪 Futter-ID-Card Titel (links)
+            lblFutterBezeichnung = new Label
+            {
+                AutoSize = true,
+                Font = new Font("Segoe UI", 18F, FontStyle.Bold),
+                ForeColor = Color.White,
+                Location = new Point(30, 22),
+                Text = "Futter"
+            };
+            header.Controls.Add(lblFutterBezeichnung);
+
+            // 🍖 Seiten-Titel (rechts)
             Label lblHeader = new Label
             {
                 Text = "🍖 FUTTER-VERWALTUNG",
-                Font = new Font("Segoe UI", 22F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 20F, FontStyle.Bold),
                 ForeColor = Color.White,
-                Location = new Point(30, 22),
                 AutoSize = true,
-                BackColor = Color.Transparent
+                BackColor = Color.Transparent,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
+
+            // rechts ausrichten
+            lblHeader.Location = new Point(
+                header.Width - lblHeader.PreferredWidth - 30,
+                25
+            );
+
+            // dynamisch bei Resize
+            header.Resize += (s, e) =>
+            {
+                lblHeader.Left = header.Width - lblHeader.PreferredWidth - 30;
+            };
+
             header.Controls.Add(lblHeader);
+
+            // 👉 Header NUR EINMAL hinzufügen
             this.Controls.Add(header);
 
             // Basis-Daten (Spalte 1)
@@ -490,7 +530,12 @@ namespace ZooApp
                 if (dt.Rows.Count == 0) { this.Close(); return; }
 
                 DataRow r = dt.Rows[0];
-                
+
+                // 🪪 Futter-ID-Card Header
+                lblFutterBezeichnung.Text = $"#F{futterID:D4} – {r["Bezeichnung"]}";
+                lblFutterBezeichnung.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
+                lblFutterBezeichnung.ForeColor = Color.FromArgb(44, 62, 80);
+
                 txtBezeichnung.Text = r["Bezeichnung"].ToString();
                 txtEinheit.Text = r["Einheit"].ToString();
                 numPreis.Value = r["Preis_pro_Einheit"] != DBNull.Value ? Convert.ToDecimal(r["Preis_pro_Einheit"]) : 0;

@@ -8,54 +8,59 @@ using System.IO;
 namespace ZooApp
 {
     /// <summary>
-    /// VOLLSTÄNDIGES Pfleger-Profil mit ID-Karte, Foto, Hierarchie, Tieren, Aufgaben, Urlaub, Arbeitszeit
-    /// Nutzt ALLE verfügbaren Datenbank-Felder
+    /// Pfleger-Detailformular mit allen Informationen
+    /// Zeigt ID-Karte, persönliche Daten, Arbeitsinformationen und Zuordnungen
     /// </summary>
     public class PflegerDetailForm : Form
     {
+        // Datenbankverbindung
         private readonly DB db = new DB();
-        private readonly int pflegerID;
-        private string currentFotoPath = "";
+        private readonly int pflegerID;  // ID des aktuell bearbeiteten Pflegers
+        private string currentFotoPath = "";  // Pfad zum Profilfoto
 
-        // Panels - Optimiertes 4-Panel Layout
+        // Hauptpanels für die 4 Bereiche
         private Panel idPanel, personalPanel, arbeitPanel, zuordnungenPanel;
         
-        // ID-Karte
-        private PictureBox pbFoto;
+        // ID-Karte Bereich
+        private PictureBox pbFoto;  // Profilfoto
         private Label lblPersonalnummer, lblPflegerName, lblPosition, lblRolle;
         private Button btnFotoHochladen;
         
-        // Persönliche Daten
+        // Persönliche Daten Bereich
         private TextBox txtVorname, txtNachname, txtTelefon, txtEmail, txtAdresse, txtNotfallkontakt;
         private DateTimePicker dtpGeburtsdatum;
-        private Label lblAlter;
+        private Label lblAlter;  // Zeigt berechnetes Alter
         
-        // Arbeit & Finanzen
+        // Arbeit & Finanzen Bereich
         private NumericUpDown numGehalt, numWochenstunden, numUrlaubstage, numResturlaub;
         private DateTimePicker dtpEinstellung;
         private ComboBox cmbSteuerklasse, cmbPosition, cmbRolle, cmbArbeitszeitmodell, cmbHauptpfleger;
         private TextBox txtSV, txtIBAN, txtKrankenkasse, txtAusweis, txtQualifikationen, txtFortbildungen;
-        private Label lblAnstellungsdauer, lblKrankentage;
+        private Label lblAnstellungsdauer, lblKrankentage;  // Zeigt berechnete Jahre
         private CheckBox chkIstHauptpfleger, chkAktiv, chkAccountAktiv;
         
-        // Zuordnungen
-        private ListBox lbAssistenten, lbTiere;
-        private CheckedListBox clbAufgaben;
+        // Zuordnungen Bereich
+        private ListBox lbAssistenten, lbTiere;  // Listen für Assistenten und Tiere
+        private CheckedListBox clbAufgaben;  // Aufgabenbereiche mit Checkboxen
         private Button btnTierHinzu, btnAufgabeHinzu;
         
-        // Notizen & Buttons
-        private TextBox txtNotizen;
+        // Aktions-Buttons
         private Button btnSpeichern, btnSchliessen;
 
+        /// <summary>
+        /// Konstruktor - Erstellt Formular für spezifischen Pfleger
+        /// </summary>
+        /// <param name="pflegerID">ID des zu bearbeitenden Pflegers</param>
         public PflegerDetailForm(int pflegerID)
         {
             this.pflegerID = pflegerID;
-            InitializeUI();
-            LoadPflegerData();
+            InitializeUI();      // UI-Elemente erstellen
+            LoadPflegerData();   // Daten aus DB laden
         }
 
         /// <summary>
-        /// Initialisiert komplettes UI mit 4 Panels + Buttons
+        /// Erstellt die komplette Benutzeroberfläche
+        /// Layout: Header + 4 Panels (ID, Personal, Arbeit, Zuordnungen) + Buttons
         /// </summary>
         private void InitializeUI()
         {
@@ -115,7 +120,8 @@ namespace ZooApp
         }
 
         /// <summary>
-        /// Erstellt ID-Karte mit Foto, Personalnummer, Position, Rolle
+        /// Erstellt ID-Karten-Bereich (links oben)
+        /// Enthält: Foto, Personalnummer, Name, Position, Rolle, Status
         /// </summary>
         private void CreateIDCard()
         {
@@ -208,7 +214,8 @@ namespace ZooApp
         }
 
         /// <summary>
-        /// Persönliche Daten: Name, Geburtsdatum, Kontakt, Notfallkontakt
+        /// Erstellt Bereich für persönliche Daten (links unten)
+        /// Enthält: Name, Geburtsdatum, Telefon, Email, Notfallkontakt
         /// </summary>
         private void CreatePersonalSection()
         {
@@ -255,7 +262,8 @@ namespace ZooApp
         }
 
         /// <summary>
-        /// Arbeit & Finanzen: Gehalt, Steuer, Position, Urlaub, Arbeitszeit
+        /// Erstellt Bereich für Arbeit & Finanzen (Mitte)
+        /// Enthält: Gehalt, Position, Steuer, Urlaub, Arbeitszeit, Qualifikationen
         /// </summary>
         private void CreateArbeitSection()
         {
@@ -338,7 +346,8 @@ namespace ZooApp
         }
 
         /// <summary>
-        /// Zuordnungen: Hierarchie, Tiere, Aufgabenbereiche
+        /// Erstellt Bereich für Zuordnungen (rechts)
+        /// Enthält: Vorgesetzter, Assistenten, Tiere, Aufgabenbereiche
         /// </summary>
         private void CreateZuordnungenSection()
         {
@@ -400,7 +409,7 @@ namespace ZooApp
         }
 
         /// <summary>
-        /// Speichern & Schließen Buttons
+        /// Erstellt Speichern- und Schließen-Buttons am unteren Rand
         /// </summary>
         private void CreateButtons()
         {
@@ -438,7 +447,8 @@ namespace ZooApp
         }
 
         /// <summary>
-        /// Lädt alle Pfleger-Daten aus DB
+        /// Lädt alle Daten des Pflegers aus der Datenbank
+        /// Füllt alle Felder mit den aktuellen Werten
         /// </summary>
         private void LoadPflegerData()
         {
@@ -503,6 +513,7 @@ namespace ZooApp
             }
         }
 
+        // Lädt Vorgesetzte in Dropdown
         private void LoadDropdowns()
         {
             try
@@ -517,6 +528,7 @@ namespace ZooApp
             catch { }
         }
 
+        // Lädt Liste der Assistenten (wenn Hauptpfleger)
         private void LoadAssistenten()
         {
             lbAssistenten.Items.Clear();
@@ -530,6 +542,7 @@ namespace ZooApp
             catch { }
         }
 
+        // Lädt Aufgabenbereiche mit Checkboxen
         private void LoadAufgaben()
         {
             try
@@ -548,6 +561,7 @@ namespace ZooApp
             catch { }
         }
 
+        // Lädt zugeordnete Tiere
         private void LoadTiere()
         {
             try
@@ -562,6 +576,7 @@ namespace ZooApp
             catch { }
         }
 
+        // Aktualisiert Anzeige der ID-Karte mit aktuellen Daten
         private void UpdateIDCard()
         {
             lblPflegerName.Text = $"{txtVorname.Text}\n{txtNachname.Text}";
@@ -569,6 +584,7 @@ namespace ZooApp
             lblRolle.Text = $"👔 {cmbRolle.SelectedItem?.ToString() ?? "Rolle"}";
         }
 
+        // Lädt und zeigt das Profilfoto
         private void LoadFoto()
         {
             if (!string.IsNullOrEmpty(currentFotoPath) && File.Exists(currentFotoPath))
@@ -579,6 +595,7 @@ namespace ZooApp
             else pbFoto.Image = null;
         }
 
+        // Button "Foto hochladen" - Öffnet Dateiauswahl für Profilfoto
         private void BtnFotoHochladen_Click(object sender, EventArgs e)
         {
             using (OpenFileDialog ofd = new OpenFileDialog())
@@ -601,6 +618,7 @@ namespace ZooApp
             }
         }
 
+        // Button "Tier hinzufügen" - Ordnet Pfleger ein Tier zu
         private void BtnTierHinzu_Click(object sender, EventArgs e)
         {
             Form dlg = new Form { Text = "Tier zuordnen", Size = new Size(400, 250), StartPosition = FormStartPosition.CenterParent, FormBorderStyle = FormBorderStyle.FixedDialog };
@@ -626,6 +644,7 @@ namespace ZooApp
             }
         }
 
+        // Button "Speichern" - Speichert alle Änderungen in Datenbank
         private void BtnSpeichern_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtVorname.Text) || string.IsNullOrWhiteSpace(txtNachname.Text))
@@ -669,6 +688,7 @@ namespace ZooApp
             catch (Exception ex) { MessageBox.Show($"❌ {ex.Message}"); }
         }
 
+        // Berechnet und aktualisiert Altersanzeige
         private void UpdateAlter()
         {
             int alter = DateTime.Now.Year - dtpGeburtsdatum.Value.Year;
@@ -676,6 +696,7 @@ namespace ZooApp
             lblAlter.Text = $"{alter} Jahre";
         }
 
+        // Berechnet und aktualisiert Anstellungsdauer in Jahren
         private void UpdateAnstellungsdauer()
         {
             int jahre = DateTime.Now.Year - dtpEinstellung.Value.Year;
@@ -683,13 +704,16 @@ namespace ZooApp
             lblAnstellungsdauer.Text = $"{jahre} Jahre";
         }
 
-        // Hilfsmethoden
+        // --- Hilfsmethoden ---
+        
+        // Erstellt ein Panel mit weißem Hintergrund ("Karte")
         private Panel CreateCard(int x, int y, int w, int h)
         {
             var p = new Panel { Left = x, Top = y, Width = w, Height = h, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
             return p;
         }
 
+        // Fügt farbigen Header zu einem Panel hinzu
         private void AddHeader(Panel p, string txt, Color c)
         {
             var hdr = new Panel { Width = p.Width, Height = 55, BackColor = c, Dock = DockStyle.Top };
@@ -697,6 +721,7 @@ namespace ZooApp
             p.Controls.Add(hdr);
         }
 
+        // Fügt ein Label hinzu (wird selten verwendet)
         private void AddLabel(string txt, int y, int x = 25)
         {
             Panel targetPanel = (y < 500 && x == 25) ? personalPanel : 
@@ -706,6 +731,7 @@ namespace ZooApp
             targetPanel.Controls.Add(lbl);
         }
 
+        // Fügt Label + TextBox zum Personal-Panel hinzu
         private void AddField(string lbl, ref TextBox txt, int y)
         {
             AddLabel(lbl, y);
@@ -713,6 +739,7 @@ namespace ZooApp
             personalPanel.Controls.Add(txt);
         }
 
+        // Fügt Label + TextBox in zweiter Spalte zum Arbeit-Panel hinzu
         private void AddFieldSecondCol(string lbl, ref TextBox txt, int y)
         {
             arbeitPanel.Controls.Add(new Label { Text = lbl, Font = new Font("Segoe UI", 10F, FontStyle.Bold), ForeColor = Color.FromArgb(52, 73, 94), Location = new Point(285, y), AutoSize = true });
@@ -720,10 +747,11 @@ namespace ZooApp
             arbeitPanel.Controls.Add(txt);
         }
 
+        // Hilfsklasse für ComboBox-Einträge mit ID und Text
         private class ComboItem
         {
-            public int Value { get; set; }
-            public string Text { get; set; }
+            public int Value { get; set; }      // ID (z.B. pflegerID)
+            public string Text { get; set; }     // Anzeigetext
             public override string ToString() => Text;
         }
     }

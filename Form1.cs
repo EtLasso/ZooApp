@@ -1,10 +1,13 @@
 using System;
 using System.Data;
 using System.Drawing;
-using System.Windows.Forms;
-using System.Xml;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
+using System.Xml;
+using ClosedXML.Excel;
+using Excel = Microsoft.Office.Interop.Excel;
 
 namespace ZooApp
 {
@@ -1472,6 +1475,107 @@ namespace ZooApp
         private void btnLadeFutterplan_Click(object sender, EventArgs e)
         {
             LoadFutterplan();
+        }
+        private void btnExportFutterplanExcel_Click(object sender, EventArgs e)
+        {
+            ExportToExcelSimple();
+        }
+
+        private void ExportToExcelSimple()
+        {
+            try
+            {
+                // 1. Prüfen ob Daten vorhanden
+                if (dgvFutterplan == null || dgvFutterplan.Rows.Count == 0)
+                {
+                    MessageBox.Show("Keine Daten zum Exportieren vorhanden.", "Info",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                // 2. Dateinamen vom Benutzer wählen lassen
+                using (SaveFileDialog dialog = new SaveFileDialog())
+                {
+                    dialog.Filter = "Excel-Dateien (*.xlsx)|*.xlsx";
+                    dialog.FileName = $"Fütterungsplan_{DateTime.Now:yyyyMMdd}.xlsx";
+                    dialog.Title = "Excel Export";
+
+                    if (dialog.ShowDialog() != DialogResult.OK) return;
+
+                    // 3. Export durchführen
+                    Cursor.Current = Cursors.WaitCursor;
+
+                    // Einfache Excel-Export Funktion mit ClosedXML
+                    ExportDataGridViewToExcel(dgvFutterplan, dialog.FileName);
+
+                    Cursor.Current = Cursors.Default;
+
+                    // 4. Erfolgsmeldung
+                    MessageBox.Show($"✅ Excel-Datei wurde erstellt:\n{dialog.FileName}",
+                        "Erfolg", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                Cursor.Current = Cursors.Default;
+                MessageBox.Show($"❌ Fehler beim Export:\n{ex.Message}",
+                    "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void ExportDataGridViewToExcel(DataGridView dataGridView, string filePath)
+        {
+            try
+            {
+                using (var workbook = new ClosedXML.Excel.XLWorkbook())
+                {
+                    // Arbeitsblatt erstellen
+                    var worksheet = workbook.Worksheets.Add("Fütterungsplan");
+
+                    // 1. ÜBERSCHRIFTEN schreiben
+                    for (int col = 0; col < dataGridView.Columns.Count; col++)
+                    {
+                        var cell = worksheet.Cell(1, col + 1);
+                        cell.Value = dataGridView.Columns[col].HeaderText;
+
+                        // Formatierung der Überschriften
+                        cell.Style.Font.Bold = true;
+                        cell.Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.LightGray;
+                        cell.Style.Alignment.Horizontal = ClosedXML.Excel.XLAlignmentHorizontalValues.Center;
+                    }
+
+                    // 2. DATEN schreiben
+                    for (int row = 0; row < dataGridView.Rows.Count; row++)
+                    {
+                        if (dataGridView.Rows[row].IsNewRow) continue;
+
+                        for (int col = 0; col < dataGridView.Columns.Count; col++)
+                        {
+                            var value = dataGridView.Rows[row].Cells[col].Value;
+                            worksheet.Cell(row + 2, col + 1).Value = value?.ToString() ?? "";
+                        }
+                    }
+
+                    // 3. FORMATIERUNG
+                    // Spaltenbreite automatisch anpassen
+                    worksheet.Columns().AdjustToContents();
+
+                    // Rahmen um alle Zellen
+                    var allCells = worksheet.Range(
+                        worksheet.Cell(1, 1),
+                        worksheet.Cell(dataGridView.Rows.Count + 1, dataGridView.Columns.Count)
+                    );
+                    allCells.Style.Border.OutsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
+                    allCells.Style.Border.InsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
+
+                    // 4. SPEICHERN
+                    workbook.SaveAs(filePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Excel-Export mit ClosedXML fehlgeschlagen: {ex.Message}");
+            }
         }
 
         // Öffnet Dialog zum Erstellen eines Fütterungsplans

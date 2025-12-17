@@ -86,6 +86,7 @@ namespace ZooApp
             dgvNachbestellung = new DataGridView();
             btnLadeNachbestellung = new Button();
             tabPage8 = new TabPage();
+            btnExportFutterplanExcel = new Button();
             dgvFutterplan = new DataGridView();
             cmbTierartFutterplan = new ComboBox();
             btnLadeFutterplan = new Button();
@@ -1069,6 +1070,7 @@ namespace ZooApp
             // tabPage8
             // 
             tabPage8.BackColor = Color.WhiteSmoke;
+            tabPage8.Controls.Add(btnExportFutterplanExcel);
             tabPage8.Controls.Add(dgvFutterplan);
             tabPage8.Controls.Add(cmbTierartFutterplan);
             tabPage8.Controls.Add(btnLadeFutterplan);
@@ -1081,6 +1083,25 @@ namespace ZooApp
             tabPage8.TabIndex = 7;
             tabPage8.Text = "⑧ 🍽️ Fütterungsplan";
             // 
+            // btnExportFutterplanExcel
+            // 
+            btnExportFutterplanExcel.Anchor = AnchorStyles.Bottom;
+            btnExportFutterplanExcel.BackColor = Color.FromArgb(52, 152, 219);
+            btnExportFutterplanExcel.Cursor = Cursors.Hand;
+            btnExportFutterplanExcel.FlatAppearance.BorderSize = 0;
+            btnExportFutterplanExcel.FlatStyle = FlatStyle.Flat;
+            btnExportFutterplanExcel.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnExportFutterplanExcel.ForeColor = Color.White;
+            btnExportFutterplanExcel.Location = new Point(453, 20);
+            btnExportFutterplanExcel.Margin = new Padding(3, 4, 3, 4);
+            btnExportFutterplanExcel.Name = "btnExportFutterplanExcel";
+            btnExportFutterplanExcel.Size = new Size(158, 40);
+            btnExportFutterplanExcel.TabIndex = 8;
+            btnExportFutterplanExcel.Text = "📤 Excel Export";
+            btnExportFutterplanExcel.TextImageRelation = TextImageRelation.ImageAboveText;
+            btnExportFutterplanExcel.UseVisualStyleBackColor = false;
+            btnExportFutterplanExcel.Click += btnExportFutterplanExcel_Click;
+            // 
             // dgvFutterplan
             // 
             dgvFutterplan.AllowUserToAddRows = false;
@@ -1089,13 +1110,13 @@ namespace ZooApp
             dgvFutterplan.BackgroundColor = Color.White;
             dgvFutterplan.BorderStyle = BorderStyle.None;
             dgvFutterplan.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvFutterplan.Location = new Point(17, 133);
+            dgvFutterplan.Location = new Point(3, 231);
             dgvFutterplan.Margin = new Padding(3, 4, 3, 4);
             dgvFutterplan.Name = "dgvFutterplan";
             dgvFutterplan.ReadOnly = true;
             dgvFutterplan.RowHeadersWidth = 51;
             dgvFutterplan.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvFutterplan.Size = new Size(1328, 679);
+            dgvFutterplan.Size = new Size(1328, 606);
             dgvFutterplan.TabIndex = 7;
             // 
             // cmbTierartFutterplan
@@ -1120,7 +1141,7 @@ namespace ZooApp
             btnLadeFutterplan.Location = new Point(17, 20);
             btnLadeFutterplan.Margin = new Padding(3, 4, 3, 4);
             btnLadeFutterplan.Name = "btnLadeFutterplan";
-            btnLadeFutterplan.Size = new Size(229, 40);
+            btnLadeFutterplan.Size = new Size(158, 40);
             btnLadeFutterplan.TabIndex = 5;
             btnLadeFutterplan.Text = "🔄 Plan laden";
             btnLadeFutterplan.UseVisualStyleBackColor = false;
@@ -1246,7 +1267,7 @@ namespace ZooApp
             tabPage11.TabIndex = 10;
             tabPage11.Text = "⑪ Pfleger";
             // 
-            // btnRefreshPfleger - Button zum Aktualisieren der Pfleger-Liste
+            // btnRefreshPfleger
             // 
             btnRefreshPfleger.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnRefreshPfleger.BackColor = Color.FromArgb(149, 165, 166);
@@ -1264,7 +1285,7 @@ namespace ZooApp
             btnRefreshPfleger.UseVisualStyleBackColor = false;
             btnRefreshPfleger.Click += btnRefreshPfleger_Click;
             // 
-            // btnDelPfleger - Button zum Löschen eines Pflegers
+            // btnDelPfleger
             // 
             btnDelPfleger.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnDelPfleger.BackColor = Color.FromArgb(231, 76, 60);
@@ -1282,7 +1303,7 @@ namespace ZooApp
             btnDelPfleger.UseVisualStyleBackColor = false;
             btnDelPfleger.Click += btnDelPfleger_Click;
             // 
-            // btnEditPfleger - Button zum Bearbeiten eines Pflegers
+            // btnEditPfleger
             // 
             btnEditPfleger.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnEditPfleger.BackColor = Color.FromArgb(52, 152, 219);
@@ -1300,7 +1321,7 @@ namespace ZooApp
             btnEditPfleger.UseVisualStyleBackColor = false;
             btnEditPfleger.Click += btnEditPfleger_Click;
             // 
-            // btnNewPfleger - Button zum Erstellen eines neuen Pflegers
+            // btnNewPfleger
             // 
             btnNewPfleger.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnNewPfleger.BackColor = Color.FromArgb(46, 204, 113);
@@ -1318,8 +1339,7 @@ namespace ZooApp
             btnNewPfleger.UseVisualStyleBackColor = false;
             btnNewPfleger.Click += btnNewPfleger_Click;
             // 
-            // lbPfleger - ListBox mit allen Pflegern
-            // Doppelklick öffnet Detail-Fenster
+            // lbPfleger
             // 
             lbPfleger.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             lbPfleger.BackColor = Color.White;
@@ -1523,5 +1543,6 @@ namespace ZooApp
         private Button btnRefreshPfleger;
         private Button btnXmlExport;
         private Button btnXmlImport;
+        private Button btnExportFutterplanExcel;
     }
 }
